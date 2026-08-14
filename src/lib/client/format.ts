@@ -25,8 +25,8 @@ export const SELECTION_SHORT: Record<string, string> = {
   home: "1",
   draw: "X",
   away: "2",
-  over_2.5: "O 2.5",
-  under_2.5: "U 2.5",
+  "over_2.5": "O 2.5",
+  "under_2.5": "U 2.5",
   btts_yes: "Yes",
   btts_no: "No",
 };
