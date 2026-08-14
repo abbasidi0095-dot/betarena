@@ -1,4 +1,8 @@
+// IMPORTANT: this must be the FIRST import — ESM imports are hoisted, so the
+// polyfill only wins if it lives in a module imported before `next`.
+import "./scripts/als-polyfill.cjs";
 import "dotenv/config";
+
 import { createServer } from "http";
 import next from "next";
 import { setupSocket } from "@/server/socket";

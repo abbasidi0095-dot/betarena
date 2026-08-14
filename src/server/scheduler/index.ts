@@ -1,5 +1,3 @@
-import type { Server } from "socket.io";
-
 /** Interval runner that never throws into the event loop. */
 export function startInterval(
   name: string,

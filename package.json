@@ -2,11 +2,13 @@
   "name": "betarena",
   "version": "0.1.0",
   "private": true,
+  "type": "module",
   "scripts": {
-    "dev": "tsx server.ts",
-    "build": "next build && tsc --noEmit -p tsconfig.server.json",
-    "start": "NODE_ENV=production tsx server.ts",
-    "lint": "next lint",
+    "dev": "node scripts/dev.mjs",
+    "build": "next build && node scripts/build-server.mjs",
+    "build:server": "node scripts/build-server.mjs",
+    "start": "NODE_ENV=production node dist/server.cjs",
+    "lint": "eslint .",
     "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.server.json",
     "test": "vitest run",
     "db:migrate": "prisma migrate deploy",
@@ -32,18 +34,21 @@
     "zustand": "^5.0.8"
   },
   "devDependencies": {
+    "@next/eslint-plugin-next": "^16.3.1",
     "@tailwindcss/postcss": "^4.1.13",
     "@types/bcryptjs": "^2.4.6",
     "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^24",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "esbuild": "^0.28.2",
     "eslint": "^9",
-    "eslint-config-next": "^15.5.3",
+    "eslint-config-next": "^16.3.1",
     "prisma": "^6.16.2",
     "tailwindcss": "^4.1.13",
     "tsx": "^4.20.0",
     "typescript": "^5.9.2",
+    "typescript-eslint": "^8.67.0",
     "vitest": "^3.2.4"
   }
 }

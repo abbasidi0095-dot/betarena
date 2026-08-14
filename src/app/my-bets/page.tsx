@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { api, type BetRow } from "@/lib/client/api";
-import { formatPoints, oddsToString } from "@/lib/client/format";
 import { cn } from "@/lib/client/cn";
 import { BetCard } from "@/components/bets/BetCard";
 

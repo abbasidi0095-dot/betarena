@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect } from "vitest";
 import { KeyPool, AllKeysExhaustedError } from "@/server/adapters/key-pool";
 
 function fakeClock(start = 1_000_000) {

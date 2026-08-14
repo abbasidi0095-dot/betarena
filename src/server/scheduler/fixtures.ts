@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import * as apiFootball from "@/server/adapters/api-football";
 
 /** Refresh fixtures (and their leagues) for today ±2 days from API-Football. */
-export async function refreshFixtures(io?: Server): Promise<void> {
+export async function refreshFixtures(_io?: Server): Promise<void> {
   if (!apiFootball.isConfigured()) return;
   const today = new Date();
   const dates = [-1, 0, 1, 2].map((d) => {

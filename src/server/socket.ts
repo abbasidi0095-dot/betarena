@@ -18,11 +18,19 @@ export function parseCookies(header: string | undefined): Record<string, string>
   return out;
 }
 
+const globalForIO = globalThis as unknown as { __betarenaIO?: Server };
+
+/** Get the socket.io server (same process — custom server). */
+export function getIO(): Server | null {
+  return globalForIO.__betarenaIO ?? null;
+}
+
 export function setupSocket(httpServer: HttpServer): Server {
   const io = new Server(httpServer, {
     path: "/socket.io",
     cors: { origin: true, credentials: true },
   });
+  globalForIO.__betarenaIO = io;
 
   io.on("connection", (rawSocket) => {
     const socket = rawSocket as AppSocket;
