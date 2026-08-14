@@ -11,6 +11,7 @@ interface UserState {
   setBalance: (balance: number) => void;
   setUser: (user: MeResponse["user"] | null) => void;
   toggleSound: () => void;
+  initSound: () => void;
 }
 
 export const useUser = create<UserState>()((set, get) => ({
