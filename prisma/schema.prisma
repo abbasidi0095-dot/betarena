@@ -1,0 +1,145 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String    @id @default(cuid())
+  username          String    @unique
+  email             String    @unique
+  passwordHash      String
+  pointBalance      Int       @default(1000)
+  lastDailyBonusAt  DateTime?
+  lastRescueAt      DateTime?
+  totalWon          Int       @default(0)
+  totalStaked       Int       @default(0)
+  betsWon           Int       @default(0)
+  betsLost          Int       @default(0)
+  isBot             Boolean   @default(false)
+  createdAt         DateTime  @default(now())
+
+  friendshipsRequested Friendship[] @relation("FriendshipRequester")
+  friendshipsReceived  Friendship[] @relation("FriendshipAddressee")
+  bets                 Bet[]
+}
+
+model Friendship {
+  requesterId String
+  addresseeId String
+  status      String     @default("PENDING")
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  requester User @relation("FriendshipRequester", fields: [requesterId], references: [id], onDelete: Cascade)
+  addressee User @relation("FriendshipAddressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+
+  @@id([requesterId, addresseeId])
+}
+
+model League {
+  id         String   @id @default(cuid())
+  providerId String   @unique
+  name       String
+  country    String
+  logo       String?
+  season     Int
+
+  fixtures Fixture[]
+}
+
+model Fixture {
+  id         String   @id @default(cuid())
+  providerId String   @unique
+  leagueId   String
+  kickoff    DateTime
+  status     String   @default("SCHEDULED")
+  homeTeam   String
+  awayTeam   String
+  homeScore  Int      @default(0)
+  awayScore  Int      @default(0)
+  minute     Int?
+  events     Json     @default("[]")
+
+  league  League   @relation(fields: [leagueId], references: [id], onDelete: Cascade)
+  markets Market[]
+  legs    BetLeg[]
+
+  @@index([status, kickoff])
+  @@index([leagueId, kickoff])
+}
+
+model Market {
+  id        String   @id @default(cuid())
+  fixtureId String
+  key       String
+  status    String   @default("OPEN")
+
+  fixture Fixture @relation(fields: [fixtureId], references: [id], onDelete: Cascade)
+  odds    Odds[]
+
+  @@unique([fixtureId, key])
+}
+
+model Odds {
+  id            String   @id @default(cuid())
+  marketId      String
+  selectionKey  String
+  value         Decimal
+  previousValue Decimal?
+  updatedAt     DateTime @default(now())
+
+  market Market @relation(fields: [marketId], references: [id], onDelete: Cascade)
+
+  @@unique([marketId, selectionKey])
+}
+
+model Bet {
+  id               String    @id @default(cuid())
+  userId           String
+  type             String
+  systemType       String?
+  stakeTotal       Int
+  potentialReturn  Decimal   @default(0)
+  status           String    @default("OPEN")
+  placedAt         DateTime  @default(now())
+  settledAt        DateTime?
+
+  user         User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  legs         BetLeg[]
+  combinations BetCombination[]
+
+  @@index([userId, status])
+}
+
+model BetLeg {
+  id            String   @id @default(cuid())
+  betId         String
+  fixtureId     String
+  marketKey     String
+  selectionKey  String
+  selectionName String
+  oddsLocked    Decimal
+  status        String   @default("OPEN")
+  settledAt     DateTime?
+
+  bet     Bet    @relation(fields: [betId], references: [id], onDelete: Cascade)
+  fixture Fixture @relation(fields: [fixtureId], references: [id], onDelete: Cascade)
+
+  @@index([fixtureId, status])
+}
+
+model BetCombination {
+  id          String  @id @default(cuid())
+  betId       String
+  legIds      Json
+  stake       Int
+  oddsProduct Decimal @default(1)
+  status      String  @default("OPEN")
+  payout      Int     @default(0)
+
+  bet Bet @relation(fields: [betId], references: [id], onDelete: Cascade)
+}
