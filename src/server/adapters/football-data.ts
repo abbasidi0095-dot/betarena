@@ -30,8 +30,23 @@ export interface NormalizedWeekFixture {
   status: "SCHEDULED" | "LIVE" | "FINISHED";
   homeTeam: string;
   awayTeam: string;
+  homeTeamId?: number;
+  awayTeamId?: number;
   homeCrest?: string;
   awayCrest?: string;
+  homeScore: number | null;
+  awayScore: number | null;
+}
+
+export interface NormalizedTeamMatch {
+  providerId: string;
+  competition: string;
+  kickoff: Date;
+  status: "FINISHED";
+  homeTeam: string;
+  awayTeam: string;
+  homeTeamId: number;
+  awayTeamId: number;
   homeScore: number | null;
   awayScore: number | null;
 }
@@ -146,10 +161,43 @@ export async function getMatchesRange(
       status,
       homeTeam: m.homeTeam?.name ?? m.homeTeam?.shortName ?? "",
       awayTeam: m.awayTeam?.name ?? m.awayTeam?.shortName ?? "",
+      homeTeamId: m.homeTeam?.id ?? undefined,
+      awayTeamId: m.awayTeam?.id ?? undefined,
       homeCrest: m.homeTeam?.crest ?? undefined,
       awayCrest: m.awayTeam?.crest ?? undefined,
       homeScore: m.score?.fullTime?.home ?? null,
       awayScore: m.score?.fullTime?.away ?? null,
+    });
+  }
+  return out;
+}
+
+/**
+ * A team's finished matches over a window (covers the previous season during
+ * the off-season, so form and H2H still work before the new season starts).
+ */
+export async function getTeamMatches(
+  teamId: number,
+  dateFrom: string,
+  dateTo: string,
+): Promise<NormalizedTeamMatch[]> {
+  const raw = await call(`/teams/${teamId}/matches?status=FINISHED&dateFrom=${dateFrom}&dateTo=${dateTo}`);
+  const out: NormalizedTeamMatch[] = [];
+  for (const m of raw) {
+    const homeScore = m.score?.fullTime?.home;
+    const awayScore = m.score?.fullTime?.away;
+    if (homeScore === null || awayScore === null) continue;
+    out.push({
+      providerId: String(m.id),
+      competition: m.competition?.name ?? "Unknown",
+      kickoff: new Date(m.utcDate ?? Date.now()),
+      status: "FINISHED",
+      homeTeam: m.homeTeam?.name ?? m.homeTeam?.shortName ?? "",
+      awayTeam: m.awayTeam?.name ?? m.awayTeam?.shortName ?? "",
+      homeTeamId: m.homeTeam?.id ?? teamId,
+      awayTeamId: m.awayTeam?.id ?? teamId,
+      homeScore,
+      awayScore,
     });
   }
   return out;

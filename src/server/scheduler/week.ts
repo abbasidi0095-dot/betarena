@@ -22,7 +22,7 @@ export async function refreshWeekFixtures(_io?: Server): Promise<void> {
   // Existing fixtures to dedupe against (today's matches are API-Football-owned)
   const existing = await prisma.fixture.findMany({
     where: { kickoff: { gte: new Date(Date.now() - 36 * 3600 * 1000) } },
-    select: { id: true, homeTeam: true, awayTeam: true, kickoff: true },
+    select: { id: true, homeTeam: true, awayTeam: true, kickoff: true, homeTeamFdId: true, awayTeamFdId: true },
   });
 
   let created = 0;
@@ -51,13 +51,25 @@ export async function refreshWeekFixtures(_io?: Server): Promise<void> {
     const kick = f.kickoff.getTime();
     const home = normalizeTeam(f.homeTeam);
     const away = normalizeTeam(f.awayTeam);
-    const dup = existing.some(
+    const dupIndex = existing.findIndex(
       (e) =>
         Math.abs(e.kickoff.getTime() - kick) < 20 * 60 * 1000 &&
         normalizeTeam(e.homeTeam) === home &&
         normalizeTeam(e.awayTeam) === away,
     );
-    if (dup) {
+    if (dupIndex >= 0) {
+      // Keep the existing row (may be api-football-owned), but make sure the
+      // football-data team ids land so stats/lineup lookups can use them.
+      const dup = existing[dupIndex];
+      if (dup.homeTeamFdId !== f.homeTeamId || dup.awayTeamFdId !== f.awayTeamId) {
+        await prisma.fixture.update({
+          where: { id: dup.id },
+          data: {
+            homeTeamFdId: f.homeTeamId ?? undefined,
+            awayTeamFdId: f.awayTeamId ?? undefined,
+          },
+        });
+      }
       skipped++;
       continue;
     }
@@ -71,6 +83,8 @@ export async function refreshWeekFixtures(_io?: Server): Promise<void> {
         status: f.status,
         homeTeam: f.homeTeam,
         awayTeam: f.awayTeam,
+        homeTeamFdId: f.homeTeamId,
+        awayTeamFdId: f.awayTeamId,
         homeLogo: f.homeCrest,
         awayLogo: f.awayCrest,
         homeScore: f.homeScore ?? 0,
@@ -80,6 +94,8 @@ export async function refreshWeekFixtures(_io?: Server): Promise<void> {
         status: f.status,
         homeScore: f.homeScore ?? undefined,
         awayScore: f.awayScore ?? undefined,
+        homeTeamFdId: f.homeTeamId ?? undefined,
+        awayTeamFdId: f.awayTeamId ?? undefined,
       },
     });
     created++;

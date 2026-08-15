@@ -6,9 +6,9 @@ import { api } from "@/lib/client/api";
 interface StatsPayload {
   homeForm: { result: "W" | "D" | "L"; opponent: string; score: string; date: string }[];
   awayForm: { result: "W" | "D" | "L"; opponent: string; score: string; date: string }[];
-  h2h: { homeTeam: string; awayTeam: string; score: string; date: string }[];
+  h2h: { homeTeam: string; awayTeam: string; score: string; date: string; competition?: string }[];
   statsSummary: { homeWinPct: number; drawPct: number; awayWinPct: number };
-  source: "api" | "db";
+  source: "api" | "football-data" | "db";
 }
 
 function FormRow({ entries }: { entries: StatsPayload["homeForm"] }) {
@@ -90,6 +90,10 @@ export function FixtureStats({ fixtureId, homeTeam, awayTeam }: { fixtureId: str
                   {m.score}
                 </span>
                 <span className="min-w-0 flex-1 truncate text-right">{m.awayTeam}</span>
+                <span className="w-24 shrink-0 text-right text-[10px] text-text-tertiary">
+                  {new Date(m.date).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+                  {m.competition ? ` · ${m.competition}` : ""}
+                </span>
               </li>
             ))}
           </ul>

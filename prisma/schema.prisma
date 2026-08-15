@@ -63,6 +63,8 @@ model Fixture {
   awayTeam   String
   homeTeamId Int?
   awayTeamId Int?
+  homeTeamFdId Int?
+  awayTeamFdId Int?
   homeLogo   String?
   awayLogo   String?
   homeScore  Int      @default(0)

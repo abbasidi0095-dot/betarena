@@ -1,20 +1,39 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { isConfigured, getTeamLastN, getH2H } from "@/server/adapters/api-football";
+import * as footballData from "@/server/adapters/football-data";
 import { TTLCache } from "@/lib/stats/memo";
-import { buildForm, computeSummary } from "@/lib/stats/fixture-stats";
+import { buildForm, buildH2H, computeSummary, type H2HEntry } from "@/lib/stats/fixture-stats";
 
 const cache = new TTLCache<StatsPayload>(15 * 60 * 1000);
+const teamCache = new TTLCache<footballData.NormalizedTeamMatch[]>(30 * 60 * 1000);
 
 interface StatsPayload {
   homeForm: { result: "W" | "D" | "L"; opponent: string; score: string; date: string }[];
   awayForm: { result: "W" | "D" | "L"; opponent: string; score: string; date: string }[];
-  h2h: { homeTeam: string; awayTeam: string; score: string; date: string }[];
+  h2h: H2HEntry[];
   statsSummary: { homeWinPct: number; drawPct: number; awayWinPct: number };
-  source: "api" | "db";
+  source: "api" | "football-data" | "db";
 }
 
 export const dynamic = "force-dynamic";
+
+/** Season history window (previous season during the off-season). */
+function seasonWindow(): { from: string; to: string } {
+  const now = new Date();
+  const from = new Date(now.getFullYear() - 1, now.getMonth(), now.getDate()).toISOString().slice(0, 10);
+  return { from, to: now.toISOString().slice(0, 10) };
+}
+
+async function fetchTeamHistory(fdTeamId: number): Promise<footballData.NormalizedTeamMatch[]> {
+  const key = String(fdTeamId);
+  const cached = teamCache.get(key);
+  if (cached) return cached;
+  const { from, to } = seasonWindow();
+  const rows = await footballData.getTeamMatches(fdTeamId, from, to);
+  teamCache.set(key, rows);
+  return rows;
+}
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -57,6 +76,35 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       };
     } catch {
       payload = null; // fall through to DB fallback
+    }
+  }
+
+  if (!payload) {
+    // Football-data tier — works with the week sync's team ids and needs no
+    // api-football key. Form + H2H are derived from each team's season matches.
+    if (
+      footballData.isConfigured() &&
+      fixture.homeTeamFdId &&
+      fixture.awayTeamFdId
+    ) {
+      try {
+        const [homeRows, awayRows] = await Promise.all([
+          fetchTeamHistory(fixture.homeTeamFdId),
+          fetchTeamHistory(fixture.awayTeamFdId),
+        ]);
+        const homeForm = buildForm(homeRows, "", fixture.homeTeamFdId);
+        const awayForm = buildForm(awayRows, "", fixture.awayTeamFdId);
+        const h2h = buildH2H(homeRows, awayRows, fixture.homeTeamFdId, fixture.awayTeamFdId);
+        payload = {
+          homeForm,
+          awayForm,
+          h2h,
+          statsSummary: computeSummary(homeForm, awayForm, h2h),
+          source: "football-data",
+        };
+      } catch {
+        payload = null; // fall through to DB fallback
+      }
     }
   }
 
