@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AnimatePresence, motion } from "framer-motion";
-import { X, Trophy } from "lucide-react";
+import { X, Trophy, Users } from "lucide-react";
 import { api, type LeagueRow } from "@/lib/client/api";
 
 export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -55,6 +55,13 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
         className="mt-2 flex items-center gap-2 rounded-lg px-2 py-2 text-sm text-win hover:bg-surface-2"
       >
         <Trophy size={14} /> Leaderboard
+      </Link>
+      <Link
+        href="/community"
+        onClick={onClose}
+        className="flex items-center gap-2 rounded-lg px-2 py-2 text-sm text-betclic-gold hover:bg-surface-2"
+      >
+        <Users size={14} /> Community
       </Link>
     </nav>
   );

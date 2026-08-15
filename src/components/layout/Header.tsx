@@ -12,6 +12,7 @@ import {
   Gift,
   LogOut,
   User as UserIcon,
+  Users,
 } from "lucide-react";
 import { useUser } from "@/stores/user";
 import { useSlip } from "@/stores/slip";
@@ -90,6 +91,14 @@ export function Header({ onOpenSidebar }: { onOpenSidebar: () => void }) {
 
           {user ? (
             <>
+              <Link
+                href="/community"
+                className="hidden rounded-lg p-2 text-white/85 hover:bg-black/15 sm:block"
+                aria-label="Community"
+              >
+                <Users size={16} />
+              </Link>
+
               <Link
                 href="/my-bets"
                 className="relative hidden rounded-lg p-2 text-white/85 hover:bg-black/15 sm:block"

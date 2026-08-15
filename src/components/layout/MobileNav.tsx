@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
-import { Home, Radio, Trophy, LayoutGrid, User } from "lucide-react";
+import { Home, Radio, Trophy, LayoutGrid, User, Users } from "lucide-react";
 import { useSlip } from "@/stores/slip";
 import { cn } from "@/lib/client/cn";
 
@@ -11,6 +11,7 @@ const items = [
   { href: "/", label: "Home", icon: Home },
   { href: "/live", label: "Live", icon: Radio },
   { href: "/my-bets", label: "Bets", icon: LayoutGrid },
+  { href: "/community", label: "Community", icon: Users },
   { href: "/leaderboard", label: "Board", icon: Trophy },
   { href: "/profile", label: "Profile", icon: User },
 ];

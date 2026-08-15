@@ -12,6 +12,7 @@ import { EventFeed } from "@/components/tracker/EventFeed";
 import { PitchVisualizer } from "@/components/tracker/PitchVisualizer";
 import { TeamCrest } from "@/components/feed/TeamCrest";
 import { FixtureStats } from "@/components/fixture/FixtureStats";
+import { FixtureCommunity } from "@/components/fixture/FixtureCommunity";
 import { cn } from "@/lib/client/cn";
 import type { DerivedMarkets, DerivedSelection } from "@/lib/betting/derived-markets";
 
@@ -26,7 +27,7 @@ export default function FixturePage({ params }: { params: Promise<{ id: string }
   const [data, setData] = useState<FixtureDetail | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [openPanel, setOpenPanel] = useState<string | null>("h2h");
-  const [activeTab, setActiveTab] = useState<"marches" | "stats" | "composition">("marches");
+  const [activeTab, setActiveTab] = useState<"marches" | "stats" | "composition" | "communaute">("marches");
 
   useEffect(() => {
     let cancelled = false;
@@ -173,6 +174,7 @@ export default function FixturePage({ params }: { params: Promise<{ id: string }
             { key: "marches", label: "Marchés" },
             { key: "stats", label: "Statistiques" },
             { key: "composition", label: "Composition" },
+            { key: "communaute", label: "Communauté" },
           ] as const).map((t) => (
             <button
               key={t.key}
@@ -192,6 +194,12 @@ export default function FixturePage({ params }: { params: Promise<{ id: string }
         {activeTab === "stats" && (
           <div className="mt-4">
             <FixtureStats fixtureId={fixture.id} homeTeam={fixture.homeTeam} awayTeam={fixture.awayTeam} />
+          </div>
+        )}
+
+        {activeTab === "communaute" && (
+          <div className="mt-4">
+            <FixtureCommunity fixtureId={fixture.id} />
           </div>
         )}
 
