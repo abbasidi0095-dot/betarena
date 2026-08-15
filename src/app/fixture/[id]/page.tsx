@@ -273,13 +273,14 @@ function MarketPanel({
   label: string;
   disabled: boolean;
 }) {
+  const twoCol = ["dc", "handicap", "exact"].includes(market.key);
   return (
-    <div className="overflow-hidden rounded-xl bg-surface">
+    <div className="overflow-hidden rounded-xl border border-card-border bg-card-dark">
       <button
         onClick={onToggle}
         className="flex w-full items-center gap-2 px-3.5 py-3 text-left"
       >
-        <span className="text-text-tertiary">{market.icon}</span>
+        <span className="text-betclic-gold">{market.icon}</span>
         <span className="flex-1 text-xs font-bold uppercase tracking-wider">
           {market.title}
         </span>
@@ -294,7 +295,7 @@ function MarketPanel({
           exit={{ height: 0, opacity: 0 }}
           transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
         >
-          <div className="grid grid-cols-3 gap-1.5 px-3.5 pb-3.5">
+          <div className={twoCol ? "grid grid-cols-2 gap-1.5 px-3.5 pb-3.5" : "grid grid-cols-3 gap-1.5 px-3.5 pb-3.5"}>
             {market.selections.map((sel) => (
               <OddsButton
                 key={sel.selectionKey}
@@ -305,6 +306,7 @@ function MarketPanel({
                 selectionName={sel.name}
                 value={sel.odds}
                 disabled={disabled}
+                probBar
               />
             ))}
           </div>
