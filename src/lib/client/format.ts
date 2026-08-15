@@ -2,8 +2,8 @@ export function formatPoints(n: number): string {
   return new Intl.NumberFormat("en-GB").format(n);
 }
 
-export function oddsToString(value: number): string {
-  return value.toFixed(2);
+export function oddsToString(value: number | string): string {
+  return Number(value).toFixed(2);
 }
 
 export function formatKickoff(iso: string): string {

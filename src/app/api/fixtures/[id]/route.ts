@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { serializeFixtures } from "@/lib/serialize";
 
 export const dynamic = "force-dynamic";
 
@@ -18,5 +19,5 @@ export async function GET(
   if (!fixture) {
     return NextResponse.json({ error: { code: "NOT_FOUND", message: "Match not found" } }, { status: 404 });
   }
-  return NextResponse.json({ fixture });
+  return NextResponse.json({ fixture: serializeFixtures([fixture])[0] });
 }

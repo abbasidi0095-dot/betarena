@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
+import { serializeFixtures } from "@/lib/serialize";
 
 export const dynamic = "force-dynamic";
 
@@ -34,5 +35,5 @@ export async function GET(req: NextRequest) {
     take: scope === "live" ? 50 : 40,
   });
 
-  return NextResponse.json({ fixtures, dataStale: false });
+  return NextResponse.json({ fixtures: serializeFixtures(fixtures), dataStale: false });
 }
