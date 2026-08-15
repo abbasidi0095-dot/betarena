@@ -21,8 +21,11 @@ export const placeBetSchema = z
       .array(
         z.object({
           fixtureId: z.string().min(1),
-          marketKey: z.enum(["h2h", "totals", "btts"]),
-          selectionKey: z.string().min(1),
+          marketKey: z
+            .string()
+            .regex(/^[a-z0-9_]+$/, "Invalid market")
+            .max(24),
+          selectionKey: z.string().min(1).max(80),
         }),
       )
       .min(1, "No selections"),

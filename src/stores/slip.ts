@@ -5,7 +5,7 @@ import { persist } from "zustand/middleware";
 
 export interface Selection {
   fixtureId: string;
-  marketKey: "h2h" | "totals" | "btts";
+  marketKey: string;
   selectionKey: string;
   selectionName: string;
   fixtureLabel: string;

@@ -5,6 +5,7 @@
  */
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { teamsFromHash, generateRealisticOdds, buildScorerSelections } from "../src/lib/betting/odds-model";
 
 const prisma = new PrismaClient();
 
@@ -67,17 +68,6 @@ const TEAMS: [string, string][] = [
   ["Sporting CP", "Braga"], ["Galatasaray", "Fenerbahçe"], ["Celtic", "Rangers"],
 ];
 
-function oddsFor(rand: () => number) {
-  const home = Math.round((1.3 + rand() * 3) * 100) / 100;
-  const draw = Math.round((2.8 + rand() * 1.5) * 100) / 100;
-  const away = Math.round((1.3 + rand() * 4.5) * 100) / 100;
-  const over = Math.round((1.5 + rand() * 1.1) * 100) / 100;
-  const under = Math.round((1.5 + rand() * 1.1) * 100) / 100;
-  const yes = Math.round((1.5 + rand() * 1) * 100) / 100;
-  const no = Math.round((1.6 + rand() * 1.1) * 100) / 100;
-  return { home, draw, away, over, under, yes, no };
-}
-
 async function seedDemoFixtures() {
   const fixtureCount = await prisma.fixture.count();
   if (fixtureCount > 0) {
@@ -137,12 +127,15 @@ async function seedDemoFixtures() {
       },
     });
 
-    const o = oddsFor(rand);
-    for (const [key, selections] of [
-      ["h2h", { home: o.home, draw: o.draw, away: o.away }],
-      ["totals", { "over_2.5": o.over, "under_2.5": o.under }],
-      ["btts", { btts_yes: o.yes, btts_no: o.no }],
-    ] as const) {
+    // Realistic pro-book odds from the Poisson strength model
+    const o = generateRealisticOdds(teamsFromHash(home), teamsFromHash(away));
+    const scorers = buildScorerSelections(home, away, o);
+    const marketDefs: Record<string, Record<string, number>> = {
+      h2h: { home: o.home, draw: o.draw, away: o.away },
+      totals: { "over_2.5": o.over_2_5, "under_2.5": o.under_2_5 },
+      btts: { btts_yes: o.btts_yes, btts_no: o.btts_no },
+    };
+    for (const [key, selections] of Object.entries(marketDefs)) {
       const market = await prisma.market.create({
         data: {
           fixtureId: fixture.id,
@@ -156,9 +149,10 @@ async function seedDemoFixtures() {
         });
       }
     }
+    void scorers;
     created++;
   }
-  console.log(`[seed] created ${created} demo fixtures with markets + odds`);
+  console.log(`[seed] created ${created} demo fixtures with realistic pro-book odds`);
 }
 
 async function main() {

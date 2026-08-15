@@ -119,7 +119,7 @@ export function generateRealisticOdds(home: TeamStrength, away: TeamStrength): R
   let pAway = 0;
   let pOver = 0;
   let pBtts = 0;
-  let exact: number[] = [0, 0, 0, 0, 0]; // 0..3, 4+
+  const exact: number[] = [0, 0, 0, 0, 0]; // 0..3, 4+
   const dc = { hd: 0, ha: 0, ad: 0 };
 
   for (let hg = 0; hg <= sm.upTo; hg++) {

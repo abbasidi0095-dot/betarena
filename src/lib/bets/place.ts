@@ -6,6 +6,7 @@ import {
   splitStake,
   type SystemType,
 } from "@/lib/betting/combos";
+import { deriveMarkets } from "@/lib/betting/derived-markets";
 
 export interface PlacedBetSummary {
   betId: string;
@@ -58,6 +59,9 @@ interface ResolvedSelection {
   odds: number;
 }
 
+/** Markets stored in DB; the rest are derived on demand from base odds. */
+const DERIVED_MARKETS = new Set(["dc", "handicap", "exact", "scorer"]);
+
 async function resolveSelections(
   selections: PlaceBetInput["selections"],
 ): Promise<ResolvedSelection[]> {
@@ -75,6 +79,31 @@ async function resolveSelections(
     if (!fixture) throw new PlacementError("Match no longer exists");
     if (fixture.status === "FINISHED")
       throw new PlacementError(`${fixture.homeTeam} vs ${fixture.awayTeam} has finished`);
+
+    if (DERIVED_MARKETS.has(sel.marketKey)) {
+      const base = await loadBaseOdds(fixture.id);
+      const derived = deriveMarkets(base, fixture.homeTeam, fixture.awayTeam);
+      const group =
+        sel.marketKey === "dc"
+          ? derived.dc
+          : sel.marketKey === "handicap"
+            ? derived.handicap
+            : sel.marketKey === "exact"
+              ? derived.exact
+              : derived.scorers;
+      const pick = group.find((s) => s.selectionKey === sel.selectionKey);
+      if (!pick) throw new PlacementError("Selection unavailable for this match");
+
+      out.push({
+        fixtureId: fixture.id,
+        marketKey: sel.marketKey,
+        selectionKey: sel.selectionKey,
+        selectionName: pick.name,
+        fixtureLabel: `${fixture.homeTeam} vs ${fixture.awayTeam}`,
+        odds: pick.odds,
+      });
+      continue;
+    }
 
     const market = await prisma.market.findUnique({
       where: { fixtureId_key: { fixtureId: fixture.id, key: sel.marketKey } },
@@ -99,6 +128,25 @@ async function resolveSelections(
 
   if (out.length === 0) throw new PlacementError("No valid selections");
   return out;
+}
+
+async function loadBaseOdds(fixtureId: string): Promise<{
+  h2h?: { home: number; draw: number; away: number };
+  totals?: { over_2_5: number; under_2_5: number };
+}> {
+  const markets = await prisma.market.findMany({
+    where: { fixtureId, key: { in: ["h2h", "totals", "btts"] } },
+    include: { odds: true },
+  });
+  const toMap = (key: string) =>
+    markets.find((m) => m.key === key)?.odds.reduce(
+      (acc, o) => ({ ...acc, [o.selectionKey]: o.value.toNumber() }),
+      {} as Record<string, number>,
+    );
+  return {
+    h2h: toMap("h2h") as never,
+    totals: toMap("totals") as never,
+  };
 }
 
 /**

@@ -31,12 +31,23 @@ export async function runSettlementSweep(): Promise<SettlementNotification[]> {
       where: { fixtureId: fixture.id, status: "OPEN" },
       include: { bet: true },
     });
+    const fullFixture = await prisma.fixture.findUnique({
+      where: { id: fixture.id },
+      select: { events: true },
+    });
+    const events = ((fullFixture?.events ?? []) as any[]).map((e) => ({
+      type: e.type,
+      minute: e.minute ?? 0,
+      team: e.team,
+      player: e.player ?? "",
+    }));
 
     for (const leg of openLegs) {
       // A market that vanished (shouldn't normally happen) resolves VOID
       const outcome = resolveLeg(
-        { marketKey: leg.marketKey as "h2h" | "totals" | "btts", selectionKey: leg.selectionKey },
+        { marketKey: leg.marketKey as any, selectionKey: leg.selectionKey },
         { home: fixture.homeScore, away: fixture.awayScore },
+        events,
       );
       await prisma.betLeg.update({
         where: { id: leg.id },

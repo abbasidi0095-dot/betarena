@@ -1,141 +1,110 @@
 "use client";
 
 import Link from "next/link";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import type { FixtureRow } from "@/lib/client/api";
 import { OddsButton } from "./OddsButton";
 import { LivePill, ScoreBadge } from "./LivePill";
+import { TeamCrest, teamColor } from "./TeamCrest";
 import { formatKickoff } from "@/lib/client/format";
 
-export function MatchCard({ fixture }: { fixture: FixtureRow }) {
+export function MatchCard({ fixture, index = 0 }: { fixture: FixtureRow; index?: number }) {
   const live = fixture.status === "LIVE";
   const finished = fixture.status === "FINISHED";
   const label = `${fixture.homeTeam} vs ${fixture.awayTeam}`;
 
   const h2h = fixture.markets.find((m) => m.key === "h2h");
-  const totals = fixture.markets.find((m) => m.key === "totals");
-  const btts = fixture.markets.find((m) => m.key === "btts");
-
   const findOdds = (market: typeof h2h, key: string) =>
     market?.odds.find((o) => o.selectionKey === key)?.value;
 
-  const bettingDisabled = finished;
-
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8 }}
+      initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
-      className="rounded-xl bg-surface p-3 transition-colors hover:bg-surface-2/60"
+      transition={{ duration: 0.4, delay: Math.min(index * 0.05, 0.4), ease: [0.16, 1, 0.3, 1] }}
+      whileHover={{ y: -2 }}
+      className="group overflow-hidden rounded-xl bg-surface transition-colors hover:bg-surface-2/60"
     >
-      <div className="mb-2 flex items-center justify-between gap-2">
+      {/* league strip */}
+      <div className="flex items-center justify-between gap-2 border-b border-surface-2/70 px-3 py-1.5">
         <Link
           href={`/league/${fixture.league.id}`}
-          className="truncate text-[11px] text-text-secondary hover:text-white"
+          className="truncate text-[10px] font-medium uppercase tracking-wider text-text-tertiary transition-colors hover:text-white"
         >
-          {fixture.league.country ? `${fixture.league.country} · ` : ""}
           {fixture.league.name}
         </Link>
         {live ? (
           <LivePill minute={fixture.minute} />
         ) : (
-          <span className="shrink-0 text-[11px] tabular-nums text-text-secondary">
+          <span className="shrink-0 text-[10px] tabular-nums text-text-tertiary">
             {formatKickoff(fixture.kickoff)}
           </span>
         )}
       </div>
 
-      <Link href={`/fixture/${fixture.id}`} className="mb-3 block">
-        <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0 flex-1 space-y-1">
-            <p className="truncate text-sm font-medium">{fixture.homeTeam}</p>
-            <p className="truncate text-sm font-medium">{fixture.awayTeam}</p>
+      {/* teams */}
+      <Link href={`/fixture/${fixture.id}`} className="block px-3 pb-2.5 pt-3">
+        <div className="flex items-center gap-3">
+          <div className="flex min-w-0 flex-1 items-center gap-2.5">
+            <TeamCrest name={fixture.homeTeam} />
+            <p className="truncate text-sm font-semibold">{fixture.homeTeam}</p>
           </div>
-          {(live || finished) && (
-            <ScoreBadge home={fixture.homeScore} away={fixture.awayScore} />
-          )}
+          {(live || finished) && <ScoreBadge home={fixture.homeScore} away={fixture.awayScore} />}
+          <div className="flex min-w-0 flex-1 items-center justify-end gap-2.5">
+            <p className="truncate text-sm font-semibold">{fixture.awayTeam}</p>
+            <TeamCrest name={fixture.awayTeam} />
+          </div>
         </div>
+        {!live && !finished && (
+          <div className="mt-1.5 flex items-center justify-center gap-1">
+            <span
+              className="h-1 w-1 rounded-full"
+              style={{ backgroundColor: teamColor(fixture.homeTeam) }}
+            />
+            <span className="text-[10px] text-text-tertiary">vs</span>
+            <span
+              className="h-1 w-1 rounded-full"
+              style={{ backgroundColor: teamColor(fixture.awayTeam) }}
+            />
+          </div>
+        )}
       </Link>
 
-      <div className="flex flex-wrap items-center gap-1.5">
-        {h2h && (
-          <div className="flex min-w-[190px] flex-1 gap-1.5">
-            {(["home", "draw", "away"] as const).map((key) => {
-              const value = findOdds(h2h, key);
-              if (!value) return <div key={key} className="min-w-[56px] flex-1" />;
-              return (
-                <div key={key} className="min-w-0 flex-1">
-                  <div className="mb-1 truncate text-center text-[9px] uppercase text-text-tertiary">
-                    {key === "home" ? "1" : key === "draw" ? "X" : "2"}
-                  </div>
-                  <OddsButton
-                    fixtureId={fixture.id}
-                    fixtureLabel={label}
-                    marketKey="h2h"
-                    selectionKey={key}
-                    selectionName={
-                      key === "home"
-                        ? `${fixture.homeTeam} to win`
-                        : key === "draw"
-                          ? "Draw"
-                          : `${fixture.awayTeam} to win`
-                    }
-                    value={value}
-                    disabled={bettingDisabled}
-                    compact
-                  />
+      {/* 1X2 only — Betclic style */}
+      {h2h && (
+        <div className="flex gap-1.5 px-3 pb-3">
+          {(["home", "draw", "away"] as const).map((key) => {
+            const value = findOdds(h2h, key);
+            if (!value) return <div key={key} className="min-h-[42px] flex-1 rounded-lg bg-surface-2/50" />;
+            return (
+              <div key={key} className="min-w-0 flex-1">
+                <div className="mb-1 text-center text-[9px] font-semibold uppercase tracking-wider text-text-tertiary">
+                  {key === "home" ? "1" : key === "draw" ? "X" : "2"}
                 </div>
-              );
-            })}
-          </div>
-        )}
-        {totals && (
-          <div className="flex gap-1.5">
-            {(["over_2.5", "under_2.5"] as const).map((key) => {
-              const value = findOdds(totals, key);
-              if (!value) return null;
-              return (
                 <OddsButton
-                  key={key}
                   fixtureId={fixture.id}
                   fixtureLabel={label}
-                  marketKey="totals"
-                  selectionKey={key}
-                  selectionName={key === "over_2.5" ? "Over 2.5 goals" : "Under 2.5 goals"}
-                  value={value}
-                  disabled={bettingDisabled}
-                  compact
-                />
-              );
-            })}
-          </div>
-        )}
-        {btts && (
-          <div className="flex gap-1.5">
-            {(["btts_yes", "btts_no"] as const).map((key) => {
-              const value = findOdds(btts, key);
-              if (!value) return null;
-              return (
-                <OddsButton
-                  key={key}
-                  fixtureId={fixture.id}
-                  fixtureLabel={label}
-                  marketKey="btts"
+                  marketKey="h2h"
                   selectionKey={key}
                   selectionName={
-                    key === "btts_yes" ? "BTTS — Yes" : "BTTS — No"
+                    key === "home"
+                      ? `${fixture.homeTeam} to win`
+                      : key === "draw"
+                        ? "Draw"
+                        : `${fixture.awayTeam} to win`
                   }
                   value={value}
-                  disabled={bettingDisabled}
+                  disabled={finished}
                   compact
                 />
-              );
-            })}
-          </div>
-        )}
-        {!h2h && !totals && !btts && (
-          <p className="py-2 text-[11px] text-text-tertiary">Odds coming soon</p>
-        )}
-      </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {!h2h && (
+        <p className="px-3 pb-3 text-center text-[11px] text-text-tertiary">Odds coming soon</p>
+      )}
     </motion.div>
   );
 }
@@ -144,8 +113,10 @@ export function SkeletonCard() {
   return (
     <div className="animate-pulse rounded-xl bg-surface p-3">
       <div className="mb-3 h-3 w-1/3 rounded bg-surface-2" />
-      <div className="mb-2 h-4 w-2/3 rounded bg-surface-2" />
-      <div className="mb-3 h-4 w-1/2 rounded bg-surface-2" />
+      <div className="mb-3 flex items-center gap-2">
+        <div className="h-8 w-8 rounded-full bg-surface-2" />
+        <div className="h-4 flex-1 rounded bg-surface-2" />
+      </div>
       <div className="flex gap-2">
         <div className="h-10 flex-1 rounded-lg bg-surface-2" />
         <div className="h-10 flex-1 rounded-lg bg-surface-2" />
@@ -154,3 +125,5 @@ export function SkeletonCard() {
     </div>
   );
 }
+
+export type { AnimatePresence };
