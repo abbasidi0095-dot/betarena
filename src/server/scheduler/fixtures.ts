@@ -121,6 +121,24 @@ export async function refreshStandings(_io?: Server): Promise<void> {
   }
 }
 
+/** Backfill `priority` on every existing league from the static map. Cheap,
+ * idempotent, runs at boot so leagues created before this feature (or skipped
+ * by dup-aware syncs) still rank correctly. */
+export async function syncLeaguePriorities(): Promise<void> {
+  const leagues = await prisma.league.findMany({
+    select: { id: true, providerId: true, priority: true },
+  });
+  let changed = 0;
+  for (const l of leagues) {
+    const p = leaguePriority(l.providerId);
+    if (p !== l.priority) {
+      await prisma.league.update({ where: { id: l.id }, data: { priority: p } });
+      changed++;
+    }
+  }
+  if (changed > 0) console.log(`[leagues] priority synced for ${changed} leagues`);
+}
+
 /** Real lineups for fixtures starting within the next 24h (1 request per fixture). */
 export async function refreshLineups(_io?: Server): Promise<void> {
   if (!apiFootball.isConfigured()) return;

@@ -7,7 +7,7 @@ import { createServer } from "http";
 import next from "next";
 import { setupSocket } from "@/server/socket";
 import { startInterval } from "@/server/scheduler";
-import { refreshFixtures, refreshStandings, refreshLineups } from "@/server/scheduler/fixtures";
+import { refreshFixtures, refreshStandings, refreshLineups, syncLeaguePriorities } from "@/server/scheduler/fixtures";
 import { refreshLiveMinutes } from "@/server/scheduler/scores";
 import { refreshRealOdds, backfillFallbackOdds } from "@/server/scheduler/odds";
 import { refreshWeekFixtures } from "@/server/scheduler/week";
@@ -56,6 +56,11 @@ async function main() {
   // Deterministic fallback odds for any scheduled match the real-odds
   // providers do not cover — runs after fixtures + real odds attach.
   await backfillFallbackOdds(io).catch(() => undefined);
+
+  // Big-league feed ordering: make sure every existing league carries its
+  // priority (leagues created before this feature, or skipped by dup-aware
+  // syncs, would otherwise stay priority 0 forever).
+  await syncLeaguePriorities().catch(() => undefined);
 
   if (apiFootball.isConfigured()) {
     startInterval("fixtures", 12 * 3600 * 1000, () => refreshFixtures(io));

@@ -23,6 +23,12 @@ Last updated: 2026-08-14 (session by opencode AI assistant)
 1. ~~Investigate webapp error~~ **FIXED 2026-08-14**: Prisma Decimal serialized odds as JSON strings → `oddsToString()` crashed on `toFixed()` (white screen). Normalized in `src/lib/serialize.ts` (used by /api/fixtures, /api/fixtures/[id], /api/search) + defensive `Number()` coercion in `format.ts`. Verified error-free in headless Chromium across all 7 pages (logged in).
 2. Dev-mode loop (`npm run dev`) sanity check — esbuild watch + `node --watch`; prod path is the verified one.
 3. Optional: `fly deploy` (Dockerfile + fly.toml ready; needs `fly launch`, Postgres attach, secrets).
+4. **DONE 2026-08-15**: Fixed fallback odds — every scheduled match without real
+   odds gets deterministic 1X2 + totals + BTTS (`src/lib/betting/fallback-odds.ts`,
+   backfilled at boot + 6h interval via `backfillFallbackOdds`). Real Odds-API
+   rows untouched. Feed now sorts big leagues first via `League.priority`
+   (2 = top-6+UCL, 1 = Europa/Eredivisie/Primeira/Süper Lig/Belgian, 0 = rest;
+   synced at boot via `syncLeaguePriorities`).
 
 ## Useful commands
 

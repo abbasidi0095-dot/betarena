@@ -28,20 +28,8 @@ export async function refreshWeekFixtures(_io?: Server): Promise<void> {
   let created = 0;
   let skipped = 0;
   for (const f of fixtures) {
-    const kick = f.kickoff.getTime();
-    const home = normalizeTeam(f.homeTeam);
-    const away = normalizeTeam(f.awayTeam);
-    const dup = existing.some(
-      (e) =>
-        Math.abs(e.kickoff.getTime() - kick) < 20 * 60 * 1000 &&
-        normalizeTeam(e.homeTeam) === home &&
-        normalizeTeam(e.awayTeam) === away,
-    );
-    if (dup) {
-      skipped++;
-      continue;
-    }
-
+    // League must be upserted even when the fixture is a dup — otherwise
+    // priority never lands on leagues whose fixtures already exist.
     const league = await prisma.league.upsert({
       where: { providerId: f.competition.providerId },
       create: {
@@ -58,6 +46,20 @@ export async function refreshWeekFixtures(_io?: Server): Promise<void> {
         priority: leaguePriority(f.competition.providerId),
       },
     });
+
+    const kick = f.kickoff.getTime();
+    const home = normalizeTeam(f.homeTeam);
+    const away = normalizeTeam(f.awayTeam);
+    const dup = existing.some(
+      (e) =>
+        Math.abs(e.kickoff.getTime() - kick) < 20 * 60 * 1000 &&
+        normalizeTeam(e.homeTeam) === home &&
+        normalizeTeam(e.awayTeam) === away,
+    );
+    if (dup) {
+      skipped++;
+      continue;
+    }
 
     await prisma.fixture.upsert({
       where: { providerId: f.providerId },
