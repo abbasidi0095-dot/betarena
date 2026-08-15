@@ -36,16 +36,29 @@ function FormRow({ entries }: { entries: StatsPayload["homeForm"] }) {
 
 export function FixtureStats({ fixtureId, homeTeam, awayTeam }: { fixtureId: string; homeTeam: string; awayTeam: string }) {
   const [data, setData] = useState<StatsPayload | null>(null);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
+    setData(null);
+    setError(false);
     api.get<StatsPayload>(`/api/fixtures/${fixtureId}/stats`).then((res) => {
-      if (!cancelled && res.ok) setData(res.data!);
+      if (cancelled) return;
+      if (res.ok) setData(res.data!);
+      else setError(true);
     });
     return () => {
       cancelled = true;
     };
   }, [fixtureId]);
+
+  if (error) {
+    return (
+      <div className="rounded-xl border border-card-border bg-card-dark p-4 text-sm text-text-tertiary">
+        Statistiques indisponibles pour le moment.
+      </div>
+    );
+  }
 
   if (!data) {
     return (

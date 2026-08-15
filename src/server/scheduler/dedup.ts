@@ -66,7 +66,15 @@ interface FixtureLike {
  */
 export async function cleanupDuplicateFixtures(): Promise<number> {
   const fixtures = await prisma.fixture.findMany({
-    select: { id: true, providerId: true, homeTeam: true, awayTeam: true, kickoff: true },
+    select: {
+      id: true,
+      providerId: true,
+      homeTeam: true,
+      awayTeam: true,
+      kickoff: true,
+      homeTeamFdId: true,
+      awayTeamFdId: true,
+    },
   });
 
   // Group by kickoff hour so comparisons stay ~O(n) per bucket.
@@ -98,6 +106,21 @@ export async function cleanupDuplicateFixtures(): Promise<number> {
         isDuplicate(p, f),
     );
     if (!twin) continue;
+
+    // Carry the football-data team ids onto the surviving fixture so the
+    // stats tier (form / H2H) still works after the fd copy is removed.
+    if (f.homeTeamFdId || f.awayTeamFdId) {
+      const t = peers.find((p) => p.id === twin.id) as (FixtureLike & { homeTeamFdId?: number | null; awayTeamFdId?: number | null }) | undefined;
+      if (t) {
+        await prisma.fixture.update({
+          where: { id: twin.id },
+          data: {
+            homeTeamFdId: f.homeTeamFdId ?? t.homeTeamFdId ?? undefined,
+            awayTeamFdId: f.awayTeamFdId ?? t.awayTeamFdId ?? undefined,
+          },
+        });
+      }
+    }
 
     // Migrate any bet legs to the surviving fixture, then drop the duplicate.
     const legCount = legsByFixture.get(f.id) ?? 0;

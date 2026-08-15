@@ -176,9 +176,15 @@ async function call(path: string): Promise<unknown[]> {
         continue;
       }
       // Soft errors (plan restrictions, suspended accounts) return HTTP 200
-      // with an errors object and no response — rotate to the next key.
-      if (body?.errors && !Array.isArray(body?.response)) {
+      // with a non-empty errors object and no real data — rotate to the next
+      // key. A bare "errors": [] with a response is a healthy call.
+      const errs = body?.errors;
+      const hasRealError =
+        errs && typeof errs === "object" && !Array.isArray(errs) && Object.keys(errs).length > 0;
+      const hasData = Array.isArray(body?.response) ? body.response.length > 0 : body?.response !== undefined;
+      if (hasRealError && !hasData) {
         softFailure = true;
+        lastSoftErrorAt = Date.now();
         continue;
       }
       if (Array.isArray(body?.response)) return body.response as unknown[];
@@ -193,6 +199,7 @@ async function call(path: string): Promise<unknown[]> {
 
 let mutexChain: Promise<unknown> = Promise.resolve();
 let lastCallAt = 0;
+let lastSoftErrorAt = 0;
 
 const MIN_CALL_INTERVAL_MS = 7_000; // ~8.5 req/min, safely under the 10/min limit
 
@@ -200,6 +207,15 @@ async function throttle(): Promise<void> {
   const wait = lastCallAt + MIN_CALL_INTERVAL_MS - Date.now();
   if (wait > 0) await new Promise((r) => setTimeout(r, wait));
   lastCallAt = Date.now();
+}
+
+/**
+ * True when the provider recently answered with a soft error (suspended
+ * account, plan restriction) instead of real data. Consumers like the stats
+ * route use this to skip api-football and degrade to other sources.
+ */
+export function softErrorRecently(withinMs = 10 * 60 * 1000): boolean {
+  return Date.now() - lastSoftErrorAt < withinMs;
 }
 
 function withMutex<T>(fn: () => Promise<T>): Promise<T> {
