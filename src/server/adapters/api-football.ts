@@ -249,3 +249,22 @@ export async function getStandings(
     form: row.form ?? "",
   }));
 }
+
+/** A team's last N fixtures (1 request). */
+export async function getTeamLastN(teamId: number, last = 5): Promise<NormalizedFixture[]> {
+  const raw = await call(`/fixtures?team=${teamId}&last=${last}`);
+  return raw.map(mapFixture);
+}
+
+/** Head-to-head between two teams (1 request). */
+export async function getH2H(homeId: number, awayId: number): Promise<NormalizedFixture[]> {
+  const raw = await call(`/fixtures?h2h=${homeId}-${awayId}`);
+  return raw.map(mapFixture);
+}
+
+/** Single fixture by provider id (1 request). */
+export async function getFixturesByProviderId(providerId: string): Promise<NormalizedFixture | null> {
+  const raw = await call(`/fixtures?id=${providerId}`);
+  const first = raw[0];
+  return first ? mapFixture(first) : null;
+}
