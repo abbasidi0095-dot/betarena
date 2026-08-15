@@ -8,7 +8,7 @@ import next from "next";
 import { setupSocket } from "@/server/socket";
 import { startInterval } from "@/server/scheduler";
 import { refreshFixtures, refreshStandings, refreshLineups, syncLeaguePriorities, backfillTeamIds } from "@/server/scheduler/fixtures";
-import { refreshLiveMinutes } from "@/server/scheduler/scores";
+import { refreshLiveMinutes, refreshLiveScores, driftLiveMinutes } from "@/server/scheduler/scores";
 import { refreshRealOdds, backfillFallbackOdds, refreshLiveFallbackOdds } from "@/server/scheduler/odds";
 import { refreshWeekFixtures } from "@/server/scheduler/week";
 import { cleanupDuplicateFixtures } from "@/server/scheduler/dedup";
@@ -75,6 +75,9 @@ async function main() {
     startInterval("fixtures", 12 * 3600 * 1000, () => refreshFixtures(io));
     startInterval("standings", 24 * 3600 * 1000, () => refreshStandings(io));
     startInterval("lineups", 15 * 60 * 1000, () => refreshLineups(io));
+    // Live scores from API-Football. The key pool fails fast (1h cooldown)
+    // once the daily quota is gone, so this is a free best-effort poll.
+    startInterval("scores:live", 5 * 60 * 1000, () => refreshLiveScores(io));
   }
   if (footballData.isConfigured()) {
     // 1 poll/min rotating 4 free keys — true minute-by-minute live updates
@@ -85,6 +88,10 @@ async function main() {
       await cleanupDuplicateFixtures();
     });
   }
+  // Wall-clock minute drift for any LIVE fixture the providers cannot serve
+  // (free-tier league coverage + daily quotas) — keeps the platform honest.
+  void driftLiveMinutes(io).catch(() => undefined);
+  startInterval("scores:drift", 60 * 1000, () => driftLiveMinutes(io));
   if (oddsApi.isConfigured()) {
     // 6 odds calls per cycle, 2 keys — ~12/day, comfortably under free quota
     startInterval("odds:real", 12 * 3600 * 1000, () => refreshRealOdds(io));

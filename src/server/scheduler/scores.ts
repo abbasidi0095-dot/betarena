@@ -3,6 +3,7 @@ import { prisma } from "@/lib/db";
 import * as apiFootball from "@/server/adapters/api-football";
 import * as footballData from "@/server/adapters/football-data";
 import { normalizeTeam, refreshLiveFallbackOdds } from "@/server/scheduler/odds";
+import { liveMinuteFromElapsed } from "@/lib/live/minute";
 
 /** Poll live fixtures; emit score:update on any change. */
 export async function refreshLiveScores(io?: Server): Promise<void> {
@@ -51,9 +52,54 @@ export async function refreshLiveScores(io?: Server): Promise<void> {
 }
 
 /**
- * Minute refresh via football-data.org (4 free keys, 10 req/min each):
- * polls live + finished matches every 60s and pushes real-time minute/score.
+ * Minute drift for LIVE fixtures with no live data source (e.g. leagues the
+ * free APIs do not cover, or a provider that is quota-exhausted). The match
+ * clock is a real function of kickoff + wall time, so we keep it honest:
+ * minute = elapsed first half, halftime break, then second half, capped at
+ * 90. Never regresses, never fabricates a result, never claims full time.
  */
+export async function driftLiveMinutes(io?: Server): Promise<void> {
+  const fixtures = await prisma.fixture.findMany({
+    where: { status: "LIVE" },
+    select: {
+      id: true,
+      kickoff: true,
+      minute: true,
+      homeScore: true,
+      awayScore: true,
+    },
+  });
+  if (fixtures.length === 0) return;
+
+  const now = new Date();
+  let drifted = 0;
+
+  for (const f of fixtures) {
+    const minute = liveMinuteFromElapsed(f.kickoff, now);
+    if (minute <= (f.minute ?? 0)) continue;
+
+    await prisma.fixture.update({
+      where: { id: f.id },
+      data: { minute },
+    });
+
+    drifted++;
+    const payload = {
+      fixtureId: f.id,
+      homeScore: f.homeScore,
+      awayScore: f.awayScore,
+      minute,
+      events: [],
+    };
+    io?.to(`live:fixture:${f.id}`).emit("score:update", payload);
+    io?.to("live").emit("score:update", payload);
+  }
+
+  if (drifted > 0) {
+    // The in-play odds model is minute-aware, so keep markets moving in step.
+    await refreshLiveFallbackOdds(io);
+  }
+}
 export async function refreshLiveMinutes(io?: Server): Promise<void> {
   if (!footballData.isConfigured()) return;
 

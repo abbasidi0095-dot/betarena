@@ -1,5 +1,6 @@
 import { KeyPool, AllKeysExhaustedError } from "./key-pool";
 import { fetchJson, csvEnv, type AdapterResponse } from "./http";
+import { parseFootballDataMinute } from "@/lib/live/minute";
 
 const BASE = "https://api.football-data.org/v4";
 
@@ -65,7 +66,7 @@ function mapMatch(raw: any): NormalizedLiveMatch | null {
     awayCrest: raw.awayTeam?.crest ?? undefined,
     kickoff: new Date(raw.utcDate ?? Date.now()),
     status,
-    minute: typeof raw.minute === "number" ? raw.minute : null,
+    minute: parseFootballDataMinute(raw.minute),
     homeScore,
     awayScore,
   };
