@@ -2,7 +2,7 @@ import type { Server } from "socket.io";
 import { prisma } from "@/lib/db";
 import * as apiFootball from "@/server/adapters/api-football";
 import * as footballData from "@/server/adapters/football-data";
-import { normalizeTeam } from "@/server/scheduler/odds";
+import { normalizeTeam, refreshLiveFallbackOdds } from "@/server/scheduler/odds";
 
 /** Poll live fixtures; emit score:update on any change. */
 export async function refreshLiveScores(io?: Server): Promise<void> {
@@ -45,6 +45,7 @@ export async function refreshLiveScores(io?: Server): Promise<void> {
       };
       io.to(`live:fixture:${existing.id}`).emit("score:update", payload);
       io.to("live").emit("score:update", payload);
+      await refreshLiveFallbackOdds(io);
     }
   }
 }
@@ -111,6 +112,7 @@ export async function refreshLiveMinutes(io?: Server): Promise<void> {
       };
       io.to(`live:fixture:${match.id}`).emit("score:update", payload);
       io.to("live").emit("score:update", payload);
+      await refreshLiveFallbackOdds(io);
     }
   }
 }

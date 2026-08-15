@@ -2,15 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Radio, Trophy, LayoutGrid, User, Users } from "lucide-react";
+import { Home, LayoutGrid, User, Users } from "lucide-react";
 import { cn } from "@/lib/client/cn";
 
 const items = [
   { href: "/", label: "Home", icon: Home },
-  { href: "/live", label: "Live", icon: Radio },
   { href: "/my-bets", label: "Bets", icon: LayoutGrid },
   { href: "/community", label: "Community", icon: Users },
-  { href: "/leaderboard", label: "Board", icon: Trophy },
   { href: "/profile", label: "Profile", icon: User },
 ];
 

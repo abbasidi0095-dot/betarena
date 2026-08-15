@@ -1,7 +1,59 @@
 import type { Server } from "socket.io";
 import { prisma } from "@/lib/db";
 import * as oddsApi from "@/server/adapters/odds-api";
-import { fallbackOdds } from "@/lib/betting/fallback-odds";
+import { fallbackOdds, liveFallbackOdds } from "@/lib/betting/fallback-odds";
+
+/**
+ * Upsert a set of markets ({key → selectionKey → value}) for one fixture,
+ * preserving previousValue and broadcasting odds:update for changed rows.
+ * Returns the number of odds written.
+ */
+export async function upsertMarketSelections(
+  fixtureId: string,
+  markets: ReadonlyArray<readonly [string, Record<string, number>]>,
+  io?: Server,
+): Promise<number> {
+  let written = 0;
+
+  for (const [marketKey, selections] of markets) {
+    const market = await prisma.market.upsert({
+      where: { fixtureId_key: { fixtureId, key: marketKey } },
+      create: { fixtureId, key: marketKey, status: "OPEN" },
+      update: { status: "OPEN" },
+    });
+
+    for (const [selectionKey, value] of Object.entries(selections)) {
+      const existing = await prisma.odds.findUnique({
+        where: { marketId_selectionKey: { marketId: market.id, selectionKey } },
+      });
+
+      if (existing) {
+        if (Math.abs(existing.value.toNumber() - value) < 0.005) continue;
+        await prisma.odds.update({
+          where: { id: existing.id },
+          data: { value, previousValue: existing.value, updatedAt: new Date() },
+        });
+      } else {
+        await prisma.odds.create({
+          data: { marketId: market.id, selectionKey, value },
+        });
+      }
+
+      written++;
+      const payload = {
+        fixtureId,
+        marketKey,
+        selectionKey,
+        value,
+        previousValue: existing?.value.toNumber() ?? null,
+      };
+      io?.to(`live:fixture:${fixtureId}`).emit("odds:update", payload);
+      io?.to("live").emit("odds:update", payload);
+    }
+  }
+
+  return written;
+}
 
 const STOP_WORDS = new Set([
   "fc", "cf", "sc", "afc", "fk", "bk", "ac", "as", "ss", "cd", "club", "de", "the",
@@ -53,42 +105,7 @@ export async function upsertOddsForFixtures(
 
     for (const [marketKey, selections] of Object.entries(ev.markets)) {
       if (!selections) continue;
-      const market = await prisma.market.upsert({
-        where: { fixtureId_key: { fixtureId: match.id, key: marketKey } },
-        create: { fixtureId: match.id, key: marketKey, status: "OPEN" },
-        update: { status: "OPEN" },
-      });
-
-      for (const [selectionKey, value] of Object.entries(selections)) {
-        const existing = await prisma.odds.findUnique({
-          where: {
-            marketId_selectionKey: { marketId: market.id, selectionKey },
-          },
-        });
-
-        if (existing) {
-          if (Math.abs(existing.value.toNumber() - value) < 0.005) continue;
-          await prisma.odds.update({
-            where: { id: existing.id },
-            data: { value, previousValue: existing.value, updatedAt: new Date() },
-          });
-        } else {
-          await prisma.odds.create({
-            data: { marketId: market.id, selectionKey, value },
-          });
-        }
-
-        emitted++;
-        const payload = {
-          fixtureId: match.id,
-          marketKey,
-          selectionKey,
-          value,
-          previousValue: existing?.value.toNumber() ?? null,
-        };
-        io?.to(`live:fixture:${match.id}`).emit("odds:update", payload);
-        io?.to("live").emit("odds:update", payload);
-      }
+      emitted += await upsertMarketSelections(match.id, [[marketKey, selections]], io);
     }
   }
   return emitted;
@@ -179,43 +196,54 @@ export async function backfillFallbackOdds(io?: Server): Promise<number> {
     markets[1][1] = odds.totals;
     markets[2][1] = odds.btts;
 
-    for (const [marketKey, selections] of markets) {
-      const market = await prisma.market.upsert({
-        where: { fixtureId_key: { fixtureId: f.id, key: marketKey } },
-        create: { fixtureId: f.id, key: marketKey, status: "OPEN" },
-        update: { status: "OPEN" },
-      });
-
-      for (const [selectionKey, value] of Object.entries(selections)) {
-        const existing = await prisma.odds.findUnique({
-          where: { marketId_selectionKey: { marketId: market.id, selectionKey } },
-        });
-
-        if (existing) {
-          if (Math.abs(existing.value.toNumber() - value) < 0.005) continue;
-          await prisma.odds.update({
-            where: { id: existing.id },
-            data: { value, previousValue: existing.value, updatedAt: new Date() },
-          });
-        } else {
-          await prisma.odds.create({
-            data: { marketId: market.id, selectionKey, value },
-          });
-        }
-
-        written++;
-        const payload = {
-          fixtureId: f.id,
-          marketKey,
-          selectionKey,
-          value,
-          previousValue: existing?.value.toNumber() ?? null,
-        };
-        io?.to(`live:fixture:${f.id}`).emit("odds:update", payload);
-        io?.to("live").emit("odds:update", payload);
-      }
-    }
+    written += await upsertMarketSelections(f.id, markets, io);
   }
   console.log(`[odds:fallback] ${written} selections written for ${fixtures.length} fixtures`);
+  return written;
+}
+
+/**
+ * In-play odds for LIVE fixtures, regenerated from the deterministic live
+ * model (score + minute aware). Runs on score/minute changes and on a short
+ * interval so live markets always move. Real pre-match odds rows are
+ * overwritten on purpose: frozen odds on a live match are worse than any
+ * movement.
+ */
+export async function refreshLiveFallbackOdds(io?: Server): Promise<number> {
+  const fixtures = await prisma.fixture.findMany({
+    where: { status: "LIVE" },
+    select: {
+      id: true,
+      homeTeam: true,
+      awayTeam: true,
+      homeScore: true,
+      awayScore: true,
+      minute: true,
+    },
+  });
+  if (fixtures.length === 0) return 0;
+
+  const markets: Array<[string, Record<string, number>]> = [
+    ["h2h", {} as Record<string, number>],
+    ["totals", {} as Record<string, number>],
+    ["btts", {} as Record<string, number>],
+  ];
+  let written = 0;
+
+  for (const f of fixtures) {
+    const odds = liveFallbackOdds(f, {
+      homeScore: f.homeScore ?? 0,
+      awayScore: f.awayScore ?? 0,
+      minute: f.minute ?? 0,
+    });
+    markets[0][1] = odds.h2h;
+    markets[1][1] = odds.totals;
+    markets[2][1] = odds.btts;
+
+    written += await upsertMarketSelections(f.id, markets, io);
+  }
+  if (written > 0) {
+    console.log(`[odds:live] ${written} selections updated for ${fixtures.length} live fixtures`);
+  }
   return written;
 }

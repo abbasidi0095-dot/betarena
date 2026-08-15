@@ -9,7 +9,7 @@ import { setupSocket } from "@/server/socket";
 import { startInterval } from "@/server/scheduler";
 import { refreshFixtures, refreshStandings, refreshLineups, syncLeaguePriorities, backfillTeamIds } from "@/server/scheduler/fixtures";
 import { refreshLiveMinutes } from "@/server/scheduler/scores";
-import { refreshRealOdds, backfillFallbackOdds } from "@/server/scheduler/odds";
+import { refreshRealOdds, backfillFallbackOdds, refreshLiveFallbackOdds } from "@/server/scheduler/odds";
 import { refreshWeekFixtures } from "@/server/scheduler/week";
 import { cleanupDuplicateFixtures } from "@/server/scheduler/dedup";
 import { runSettlement } from "@/server/scheduler/settlement";
@@ -63,6 +63,8 @@ async function main() {
   // Deterministic fallback odds for any scheduled match the real-odds
   // providers do not cover — runs after fixtures + real odds attach.
   await backfillFallbackOdds(io).catch(() => undefined);
+  // In-play odds for any fixture already LIVE at boot.
+  void refreshLiveFallbackOdds(io).catch(() => undefined);
 
   // Big-league feed ordering: make sure every existing league carries its
   // priority (leagues created before this feature, or skipped by dup-aware
@@ -90,6 +92,10 @@ async function main() {
   // Keep fallback odds in sync as the fixture pool churns (6h cadence).
   startInterval("odds:fallback", 6 * 3600 * 1000, async () => {
     await backfillFallbackOdds(io);
+  });
+  // Live odds drift with score + minute even when the score feeds are quiet.
+  startInterval("odds:live", 2 * 60 * 1000, async () => {
+    await refreshLiveFallbackOdds(io);
   });
   // Settlement always runs — it is local, no API needed.
   startInterval("settlement", 60 * 1000, () => runSettlement(io));
