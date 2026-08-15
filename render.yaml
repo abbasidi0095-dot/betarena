@@ -1,0 +1,28 @@
+# Render blueprint — free web service + external (Neon) Postgres.
+# Free Render Postgres is limited (1 per workspace, expires after 30 days),
+# so the DB lives on Neon's free tier: https://neon.tech — create a project,
+# copy the connection string into the DATABASE_URL env var when prompted.
+services:
+  - type: web
+    name: abbet
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /
+    autoDeploy: true
+    preDeployCommand: npx prisma migrate deploy
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: API_FOOTBALL_KEYS
+        sync: false
+      - key: FOOTBALL_DATA_KEYS
+        sync: false
+      - key: ODDS_API_KEYS
+        sync: false
+      - key: RESEND_API_KEY
+        sync: false
+      - key: OTP_FROM_EMAIL
+        value: "Abbet <noreply@abcv.site>"
