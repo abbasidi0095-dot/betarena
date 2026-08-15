@@ -11,6 +11,7 @@ import { refreshFixtures, refreshStandings, refreshLineups, syncLeaguePriorities
 import { refreshLiveMinutes } from "@/server/scheduler/scores";
 import { refreshRealOdds, backfillFallbackOdds } from "@/server/scheduler/odds";
 import { refreshWeekFixtures } from "@/server/scheduler/week";
+import { cleanupDuplicateFixtures } from "@/server/scheduler/dedup";
 import { runSettlement } from "@/server/scheduler/settlement";
 import * as apiFootball from "@/server/adapters/api-football";
 import * as oddsApi from "@/server/adapters/odds-api";
@@ -48,6 +49,10 @@ async function main() {
     console.log("[boot] football-data keys found — fetching the full week");
     await refreshWeekFixtures(io).catch(() => undefined);
   }
+
+  // Remove football-data duplicates of api-football fixtures (same match,
+  // different provider spellings) so each match appears exactly once.
+  await cleanupDuplicateFixtures().catch(() => undefined);
   if (oddsApi.isConfigured()) {
     console.log("[boot] The Odds API keys found — attaching real odds");
     await refreshRealOdds(io).catch(() => undefined);
@@ -72,6 +77,9 @@ async function main() {
     void refreshLiveMinutes(io).catch(() => undefined);
     startInterval("scores:minute", 60 * 1000, () => refreshLiveMinutes(io));
     startInterval("week", 12 * 3600 * 1000, () => refreshWeekFixtures(io));
+    startInterval("dedup", 12 * 3600 * 1000, async () => {
+      await cleanupDuplicateFixtures();
+    });
   }
   if (oddsApi.isConfigured()) {
     // 6 odds calls per cycle, 2 keys — ~12/day, comfortably under free quota

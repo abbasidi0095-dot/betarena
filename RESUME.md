@@ -29,6 +29,11 @@ Last updated: 2026-08-14 (session by opencode AI assistant)
    rows untouched. Feed now sorts big leagues first via `League.priority`
    (2 = top-6+UCL, 1 = Europa/Eredivisie/Primeira/Süper Lig/Belgian, 0 = rest;
    synced at boot via `syncLeaguePriorities`).
+5. **DONE 2026-08-15**: Cross-provider dedup — `cleanupDuplicateFixtures()`
+   (`src/server/scheduler/dedup.ts`) removes football-data fixtures that
+   duplicate an API-Football fixture (kickoff ±20min + token-subset team
+   names, e.g. "Alaves" vs "Deportivo Alavés"). Bet legs are migrated to the
+   surviving twin before deletion. Runs at boot + 12h interval.
 
 ## Useful commands
 
