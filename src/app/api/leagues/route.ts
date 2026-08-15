@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
   const leagues = await prisma.league.findMany({
-    orderBy: [{ name: "asc" }],
+    orderBy: [{ priority: "desc" }, { country: "asc" }, { name: "asc" }],
     include: {
       fixtures: {
         where: {
@@ -26,6 +26,7 @@ export async function GET() {
         name: l.name,
         country: l.country,
         logo: l.logo,
+        priority: l.priority,
         fixtureCount: l.fixtures.length,
       })),
   });

@@ -104,6 +104,7 @@ export interface LeagueRow {
   name: string;
   country: string;
   logo?: string | null;
+  priority: number;
   fixtureCount: number;
 }
 

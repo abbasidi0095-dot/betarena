@@ -67,6 +67,28 @@ describe("liveFallbackOdds", () => {
     expect(l.btts.btts_no).toBeLessThan(base.btts.btts_no);
   });
 
+  it("a tied match at the 90th minute has very short draw odds", () => {
+    const l = liveFallbackOdds(fixture, { homeScore: 0, awayScore: 0, minute: 90 });
+    expect(l.h2h.draw).toBeLessThan(1.6);
+  });
+
+  it("the draw tightens faster as a level game reaches its end", () => {
+    const mid = liveFallbackOdds(fixture, { homeScore: 0, awayScore: 0, minute: 70 });
+    const late = liveFallbackOdds(fixture, { homeScore: 0, awayScore: 0, minute: 90 });
+    expect(late.h2h.draw).toBeLessThan(mid.h2h.draw);
+  });
+
+  it("a late goal makes the leader the heavy favorite", () => {
+    const l = liveFallbackOdds(fixture, { homeScore: 1, awayScore: 0, minute: 80 });
+    expect(l.h2h.home).toBeLessThan(1.25);
+    expect(l.h2h.away).toBeGreaterThan(5);
+  });
+
+  it("a two-goal lead late in the game nearly ends it", () => {
+    const l = liveFallbackOdds(fixture, { homeScore: 2, awayScore: 0, minute: 80 });
+    expect(l.h2h.home).toBeLessThan(1.1);
+  });
+
   it("keeps every value inside the bookmaker range", () => {
     for (const minute of [1, 45, 60, 80, 90]) {
       for (const h of [0, 1, 2, 3]) {

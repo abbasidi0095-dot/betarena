@@ -79,7 +79,9 @@ export function liveFallbackOdds(
   const goals = live.homeScore + live.awayScore;
 
   // H2H: move probability mass toward the leader, scaled by how little time
-  // is left (a late lead is far more decisive than an early one).
+  // is left (a late lead is far more decisive than an early one). Calibrated
+  // to real in-play shapes: 1-0 at 80' ≈ 1.15-1.25 home, 0-0 at 90' ≈ 1.2-1.5
+  // draw, a 2-goal lead at 80' ≈ 1.05-1.1 home.
   let ph = 1 / base.h2h.home;
   let pd = 1 / base.h2h.draw;
   let pa = 1 / base.h2h.away;
@@ -88,11 +90,12 @@ export function liveFallbackOdds(
   pd /= pre;
   pa /= pre;
 
-  const shift = Math.exp(d * 0.35 * (2 - r));
+  const late = 1 - r; // 0 at kickoff → ~0.95 at the 90th minute
+  const shift = Math.exp(d * (0.12 + 0.95 * late));
   ph *= shift;
   pa /= shift;
-  if (d === 0) pd *= Math.exp(0.55 * (1 - r));
-  else pd *= Math.exp(-0.7 * (1 - r));
+  if (d === 0) pd *= Math.exp(2.2 * Math.pow(late, 1.3));
+  else pd *= Math.exp(-1.1 * late);
 
   const post = ph + pd + pa;
   const h2h = {
