@@ -22,7 +22,7 @@ export function Feed({
   title?: string;
 }) {
   const [tab, setTab] = useState<(typeof TABS)[number]["key"]>(scope === "league" ? "top" : scope);
-  const { fixtures } = useFixtures(tab, leagueId);
+  const { fixtures, hasMore, loadMore, loadingMore } = useFixtures(tab, leagueId);
   const liveCount = fixtures?.filter((f) => f.status === "LIVE").length ?? 0;
 
   return (
@@ -69,6 +69,18 @@ export function Feed({
         <p className="py-16 text-center text-sm text-text-tertiary">
           No matches here right now — check the other tabs.
         </p>
+      )}
+
+      {hasMore && (
+        <div className="mt-6 flex justify-center">
+          <button
+            onClick={() => void loadMore()}
+            disabled={loadingMore}
+            className="rounded-full bg-surface-2 px-6 py-2.5 text-xs font-bold uppercase tracking-wide text-text-secondary transition-colors hover:bg-surface-3 hover:text-white disabled:opacity-50"
+          >
+            {loadingMore ? "Loading…" : `Load more matches`}
+          </button>
+        </div>
       )}
     </div>
   );

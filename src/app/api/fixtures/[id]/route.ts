@@ -41,7 +41,12 @@ export async function GET(
     };
   }
 
-  const derivedMarkets = deriveMarkets(base, fixture.homeTeam, fixture.awayTeam);
+  const derivedMarkets = deriveMarkets(
+    base,
+    fixture.homeTeam,
+    fixture.awayTeam,
+    (fixture as any).lineups as never,
+  );
 
   return NextResponse.json({
     fixture: serializeFixtures([fixture])[0],

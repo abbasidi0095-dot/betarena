@@ -7,13 +7,14 @@ import { createServer } from "http";
 import next from "next";
 import { setupSocket } from "@/server/socket";
 import { startInterval } from "@/server/scheduler";
-import { refreshFixtures } from "@/server/scheduler/fixtures";
-import { refreshLiveScores } from "@/server/scheduler/scores";
-import { refreshOddsFixturesAndScores } from "@/server/scheduler/odds";
+import { refreshFixtures, refreshStandings, refreshLineups } from "@/server/scheduler/fixtures";
+import { refreshLiveMinutes } from "@/server/scheduler/scores";
+import { refreshRealOdds } from "@/server/scheduler/odds";
+import { refreshWeekFixtures } from "@/server/scheduler/week";
 import { runSettlement } from "@/server/scheduler/settlement";
-import { prisma } from "@/lib/db";
 import * as apiFootball from "@/server/adapters/api-football";
 import * as oddsApi from "@/server/adapters/odds-api";
+import * as footballData from "@/server/adapters/football-data";
 
 const dev = process.env.NODE_ENV !== "production";
 const port = Number(process.env.PORT ?? 3000);
@@ -37,24 +38,35 @@ async function main() {
 
   // Boot: initial refresh if configured, then steady-state intervals.
   if (apiFootball.isConfigured()) {
-    const fixtureCount = await prisma.fixture.count();
-    if (fixtureCount === 0) {
-      console.log("[boot] no fixtures in db — running initial refresh");
-      await refreshFixtures(io).catch(() => undefined);
-    }
+    console.log("[boot] API-Football key found — fetching today's fixtures");
+    await refreshFixtures(io).catch(() => undefined);
+    void refreshStandings(io).catch(() => undefined);
+    void refreshLineups(io).catch(() => undefined);
+  }
+  if (footballData.isConfigured()) {
+    // Full week, ALL competitions, real crests (football-data has no date cap)
+    console.log("[boot] football-data keys found — fetching the full week");
+    await refreshWeekFixtures(io).catch(() => undefined);
   }
   if (oddsApi.isConfigured()) {
-    console.log("[boot] The Odds API keys found — fetching real fixtures + odds");
-    await refreshOddsFixturesAndScores(io).catch(() => undefined);
+    console.log("[boot] The Odds API keys found — attaching real odds");
+    await refreshRealOdds(io).catch(() => undefined);
   }
 
   if (apiFootball.isConfigured()) {
-    startInterval("fixtures", 6 * 3600 * 1000, () => refreshFixtures(io));
-    startInterval("scores", 60 * 1000, () => refreshLiveScores(io));
+    startInterval("fixtures", 12 * 3600 * 1000, () => refreshFixtures(io));
+    startInterval("standings", 24 * 3600 * 1000, () => refreshStandings(io));
+    startInterval("lineups", 3 * 3600 * 1000, () => refreshLineups(io));
+  }
+  if (footballData.isConfigured()) {
+    // 1 poll/min rotating 4 free keys — true minute-by-minute live updates
+    void refreshLiveMinutes(io).catch(() => undefined);
+    startInterval("scores:minute", 60 * 1000, () => refreshLiveMinutes(io));
+    startInterval("week", 12 * 3600 * 1000, () => refreshWeekFixtures(io));
   }
   if (oddsApi.isConfigured()) {
-    // Quota-budgeted: ~12 odds calls + ~6 scores calls per cycle, 2 keys.
-    startInterval("odds:real", 6 * 3600 * 1000, () => refreshOddsFixturesAndScores(io));
+    // 6 odds calls per cycle, 2 keys — ~12/day, comfortably under free quota
+    startInterval("odds:real", 12 * 3600 * 1000, () => refreshRealOdds(io));
   }
   // Settlement always runs — it is local, no API needed.
   startInterval("settlement", 60 * 1000, () => runSettlement(io));

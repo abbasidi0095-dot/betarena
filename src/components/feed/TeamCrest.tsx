@@ -78,19 +78,22 @@ function isLight(hex: string): boolean {
 
 export function TeamCrest({
   name,
+  logo,
   size = 34,
   className,
 }: {
   name: string;
+  logo?: string | null;
   size?: number;
   className?: string;
 }) {
   const color = teamColor(name);
   const light = isLight(color);
+  const fallback = initials(name);
   return (
     <span
       className={cn(
-        "flex shrink-0 items-center justify-center rounded-full font-black uppercase",
+        "relative flex shrink-0 items-center justify-center overflow-hidden rounded-full font-black uppercase",
         className,
       )}
       style={{
@@ -103,7 +106,24 @@ export function TeamCrest({
       }}
       aria-hidden
     >
-      {initials(name)}
+      {logo ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={logo}
+          alt=""
+          width={size}
+          height={size}
+          className="h-full w-full object-contain"
+          loading="lazy"
+          onError={(e) => {
+            (e.currentTarget.parentElement as HTMLElement).style.display = "none";
+            (e.currentTarget.parentElement as HTMLElement).textContent = fallback;
+            (e.currentTarget.parentElement as HTMLElement).style.display = "";
+          }}
+        />
+      ) : (
+        fallback
+      )}
     </span>
   );
 }

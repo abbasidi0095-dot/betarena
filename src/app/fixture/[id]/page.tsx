@@ -188,6 +188,55 @@ export default function FixturePage({ params }: { params: Promise<{ id: string }
         ))}
       </div>
 
+      {fixture.lineups && fixture.lineups.length >= 2 && (
+        <div className="mt-6">
+          <h2 className="mb-2 text-sm font-bold">Lineups</h2>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {fixture.lineups.map((team) => (
+              <div key={team.team} className="rounded-xl bg-surface p-3">
+                <div className="mb-2 flex items-center gap-2">
+                  <TeamCrest
+                    name={team.teamName}
+                    logo={team.team === "home" ? fixture.homeLogo : fixture.awayLogo}
+                    size={24}
+                  />
+                  <p className="truncate text-sm font-semibold">{team.teamName}</p>
+                  {team.formation && (
+                    <span className="ml-auto rounded bg-surface-2 px-1.5 py-0.5 text-[10px] font-bold text-text-secondary">
+                      {team.formation}
+                    </span>
+                  )}
+                </div>
+                <ul className="grid grid-cols-2 gap-x-2 gap-y-1">
+                  {team.players.map((p) => (
+                    <li
+                      key={p.id}
+                      className="flex items-center gap-1.5 rounded px-1 py-0.5 text-[11px]"
+                    >
+                      {p.photo ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img
+                          src={p.photo}
+                          alt=""
+                          className="h-4 w-4 rounded-full object-contain"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <span className="h-4 w-4 rounded-full bg-surface-3" />
+                      )}
+                      <span className="truncate">{p.name}</span>
+                      <span className="ml-auto shrink-0 text-[9px] uppercase text-text-tertiary">
+                        {p.pos}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {fixture.status !== "SCHEDULED" && (
         <div className="mt-6 grid gap-4 md:grid-cols-2">
           <div>

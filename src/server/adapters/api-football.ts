@@ -18,11 +18,43 @@ export interface NormalizedFixture {
   status: "SCHEDULED" | "LIVE" | "FINISHED";
   homeTeam: string;
   awayTeam: string;
+  homeLogo?: string;
+  awayLogo?: string;
   homeScore: number;
   awayScore: number;
   minute: number | null;
   events: NormalizedEvent[];
 }
+
+export interface NormalizedLineupPlayer {
+  id: string;
+  name: string;
+  photo?: string;
+  pos: string;
+}
+
+export interface NormalizedLineup {
+  fixtureProviderId: string;
+  teamId: string;
+  teamName: string;
+  formation?: string;
+  players: NormalizedLineupPlayer[];
+}
+
+/** API-Football league ids for the competitions we track. */
+export const LEAGUE_IDS: Record<string, number> = {
+  soccer_epl: 39,
+  soccer_spain_la_liga: 140,
+  soccer_italy_serie_a: 135,
+  soccer_germany_bundesliga: 78,
+  soccer_france_ligue_one: 61,
+  soccer_uefa_champs_league: 2,
+  soccer_uefa_europa_league: 3,
+  soccer_netherlands_eredivisie: 88,
+  soccer_portugal_primeira_liga: 94,
+  soccer_turkey_super_league: 203,
+  soccer_belgium_first_div: 144,
+};
 
 let pool: KeyPool | null = null;
 
@@ -93,6 +125,8 @@ function mapFixture(raw: any): NormalizedFixture {
     status: mapStatus(raw.fixture?.status?.short ?? "NS"),
     homeTeam: raw.teams?.home?.name ?? "Home",
     awayTeam: raw.teams?.away?.name ?? "Away",
+    homeLogo: raw.teams?.home?.logo ?? undefined,
+    awayLogo: raw.teams?.away?.logo ?? undefined,
     homeScore: raw.goals?.home ?? 0,
     awayScore: raw.goals?.away ?? 0,
     minute: elapsed,
@@ -161,4 +195,53 @@ export async function getFinishedLast24h(): Promise<NormalizedFixture[]> {
   const to = new Date().toISOString().slice(0, 10);
   const raw = await call(`/fixtures?from=${from}&to=${to}&status=FT-AET-PEN`);
   return raw.map(mapFixture);
+}
+
+/** Real lineups for specific fixtures (1 request per fixture). */
+export async function getLineups(fixtureProviderIds: string[]): Promise<NormalizedLineup[]> {
+  const out: NormalizedLineup[] = [];
+  for (const fid of fixtureProviderIds) {
+    const raw = await call(`/fixtures/lineups?fixture=${fid}`);
+    for (const team of raw as any[]) {
+      const players = [
+        ...(team.startingXI ?? []),
+        ...(team.substitutes ?? []),
+      ].map((p: any) => ({
+        id: String(p.player?.id ?? ""),
+        name: p.player?.name ?? "Unknown",
+        photo: p.player?.photo ?? undefined,
+        pos: p.pos ?? "SUB",
+      }));
+      out.push({
+        fixtureProviderId: fid,
+        teamId: String(team.team?.id ?? ""),
+        teamName: team.team?.name ?? "",
+        formation: team.formation ?? undefined,
+        players,
+      });
+    }
+  }
+  return out;
+}
+
+/** League standings for a season (1 request per league). */
+export async function getStandings(
+  leagueApiId: number,
+  season: number,
+): Promise<any[]> {
+  const raw = await call(`/standings?league=${leagueApiId}&season=${season}`);
+  const standings = (raw as any[])[0]?.league?.standings?.[0] ?? [];
+  return standings.map((row: any) => ({
+    rank: row.rank,
+    team: row.team?.name ?? "?",
+    logo: row.team?.logo ?? null,
+    played: row.all?.played ?? 0,
+    win: row.all?.win ?? 0,
+    draw: row.all?.draw ?? 0,
+    lose: row.all?.lose ?? 0,
+    goalsFor: row.all?.goals?.for ?? 0,
+    goalsAgainst: row.all?.goals?.against ?? 0,
+    points: row.points ?? 0,
+    form: row.form ?? "",
+  }));
 }

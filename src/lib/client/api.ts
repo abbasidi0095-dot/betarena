@@ -70,6 +70,8 @@ export interface FixtureRow {
   status: string;
   homeTeam: string;
   awayTeam: string;
+  homeLogo?: string | null;
+  awayLogo?: string | null;
   homeScore: number;
   awayScore: number;
   minute: number | null;
@@ -80,6 +82,12 @@ export interface FixtureRow {
     player: string;
     zone: number;
   }[];
+  lineups?: {
+    team: "home" | "away";
+    teamName: string;
+    formation?: string;
+    players: { id: string; name: string; photo?: string; pos: string }[];
+  }[];
   league: { id: string; name: string; country: string; logo?: string | null };
   markets: MarketRow[];
 }
@@ -87,6 +95,8 @@ export interface FixtureRow {
 export interface FixturesResponse {
   fixtures: FixtureRow[];
   dataStale: boolean;
+  hasMore: boolean;
+  offset: number;
 }
 
 export interface LeagueRow {

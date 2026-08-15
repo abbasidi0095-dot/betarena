@@ -30,6 +30,46 @@ export interface DerivedMarkets {
   scorers: DerivedSelection[];
 }
 
+export interface LineupPlayer {
+  id: string;
+  name: string;
+  photo?: string;
+  pos: string;
+}
+
+export interface LineupTeam {
+  team: "home" | "away";
+  teamName: string;
+  formation?: string;
+  players: LineupPlayer[];
+}
+
+/** Anytime-scorer odds from REAL lineups (attackers get the best prices). */
+export function buildScorersFromLineups(
+  lineups: LineupTeam[],
+  lambdaH: number,
+  lambdaA: number,
+): DerivedSelection[] {
+  const out: DerivedSelection[] = [];
+  const scorerOdds = (teamLambda: number, index: number) =>
+    Math.min(0.55, Math.max(0.05, (0.35 + teamLambda) * 0.16 * (1.4 - index * 0.28)));
+  for (const team of lineups) {
+    const lambda = team.team === "home" ? lambdaH : lambdaA;
+    const attackers = team.players
+      .filter((p) => ["ST", "W", "AM", "LW", "RW", "SS"].includes(p.pos))
+      .slice(0, 4);
+    if (attackers.length === 0) continue;
+    attackers.forEach((p, i) =>
+      out.push({
+        selectionKey: `scorer:${team.teamName}:${p.name}`,
+        name: p.name,
+        odds: price(scorerOdds(lambda, i), 1.1),
+      }),
+    );
+  }
+  return out;
+}
+
 function poisson(lambda: number, k: number): number {
   let acc = Math.exp(-lambda) * lambda ** k;
   for (let i = 2; i <= k; i++) acc *= 1 / i;
@@ -128,6 +168,7 @@ export function deriveMarkets(
   base: BaseOdds,
   homeTeam: string,
   awayTeam: string,
+  lineups?: LineupTeam[],
 ): DerivedMarkets {
   const h2h = base.h2h;
   const totals = base.totals;
@@ -203,16 +244,29 @@ export function deriveMarkets(
     { selectionKey: "btts_no", name: "Both teams to score — No", odds: price(1 - model.pBtts) },
   ];
 
-  // Anytime scorer: deterministic star players, odds from team goal share
-  const scorerOdds = (teamLambda: number, index: number) =>
-    Math.min(0.55, Math.max(0.05, (0.35 + teamLambda) * 0.16 * (1.4 - index * 0.28)));
-  const scorers: DerivedSelection[] = [];
-  starPlayersFor(homeTeam).forEach((p, i) =>
-    scorers.push({ selectionKey: p.id, name: p.name, odds: price(scorerOdds(lambdaH, i), 1.1) }),
-  );
-  starPlayersFor(awayTeam).forEach((p, i) =>
-    scorers.push({ selectionKey: p.id, name: p.name, odds: price(scorerOdds(lambdaA, i), 1.1) }),
-  );
+  // Anytime scorer: real lineups when available, otherwise deterministic stars
+  const scorers: DerivedSelection[] = lineups?.length
+    ? buildScorersFromLineups(lineups, lambdaH, lambdaA)
+    : (() => {
+        const scorerOdds = (teamLambda: number, index: number) =>
+          Math.min(0.55, Math.max(0.05, (0.35 + teamLambda) * 0.16 * (1.4 - index * 0.28)));
+        const out: DerivedSelection[] = [];
+        starPlayersFor(homeTeam).forEach((p, i) =>
+          out.push({
+            selectionKey: p.id,
+            name: p.name,
+            odds: price(scorerOdds(lambdaH, i), 1.1),
+          }),
+        );
+        starPlayersFor(awayTeam).forEach((p, i) =>
+          out.push({
+            selectionKey: p.id,
+            name: p.name,
+            odds: price(scorerOdds(lambdaA, i), 1.1),
+          }),
+        );
+        return out;
+      })();
 
   return { dc, handicap, exact, btts, scorers };
 }

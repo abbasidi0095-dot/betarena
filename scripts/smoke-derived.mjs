@@ -29,7 +29,7 @@ async function req(method, path, body) {
 
 const main = async () => {
   const fx = await prisma.fixture.findMany({
-    where: { status: "SCHEDULED", providerId: { startsWith: "demo-" } },
+    where: { status: "SCHEDULED" },
     include: { markets: { include: { odds: true } } },
     orderBy: { kickoff: "asc" },
     take: 3,

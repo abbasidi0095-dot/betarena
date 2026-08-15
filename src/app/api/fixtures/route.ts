@@ -7,6 +7,8 @@ export const dynamic = "force-dynamic";
 export async function GET(req: NextRequest) {
   const scope = req.nextUrl.searchParams.get("scope") ?? "top";
   const leagueId = req.nextUrl.searchParams.get("leagueId");
+  const offset = Math.max(0, Number(req.nextUrl.searchParams.get("offset") ?? 0));
+  const limit = Math.min(500, Math.max(1, Number(req.nextUrl.searchParams.get("limit") ?? 150)));
 
   const now = new Date();
   const where =
@@ -19,7 +21,7 @@ export async function GET(req: NextRequest) {
           : {
               kickoff: {
                 gte: new Date(now.getTime() - 3 * 3600 * 1000),
-                lte: new Date(now.getTime() + 10 * 24 * 3600 * 1000),
+                lte: new Date(now.getTime() + 8 * 24 * 3600 * 1000),
               },
             };
 
@@ -32,8 +34,16 @@ export async function GET(req: NextRequest) {
       },
     },
     orderBy: [{ status: "desc" }, { kickoff: "asc" }],
-    take: scope === "live" ? 50 : 40,
+    skip: offset,
+    take: limit + 1,
   });
+  const hasMore = fixtures.length > limit;
+  const page = fixtures.slice(0, limit);
 
-  return NextResponse.json({ fixtures: serializeFixtures(fixtures), dataStale: false });
+  return NextResponse.json({
+    fixtures: serializeFixtures(page),
+    dataStale: false,
+    hasMore,
+    offset: offset + page.length,
+  });
 }

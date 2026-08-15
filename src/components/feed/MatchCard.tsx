@@ -46,13 +46,13 @@ export function MatchCard({ fixture, index = 0 }: { fixture: FixtureRow; index?:
       <Link href={`/fixture/${fixture.id}`} className="block px-3 pb-2.5 pt-3">
         <div className="flex items-center gap-3">
           <div className="flex min-w-0 flex-1 items-center gap-2.5">
-            <TeamCrest name={fixture.homeTeam} />
+            <TeamCrest name={fixture.homeTeam} logo={fixture.homeLogo} />
             <p className="truncate text-sm font-semibold">{fixture.homeTeam}</p>
           </div>
           {(live || finished) && <ScoreBadge home={fixture.homeScore} away={fixture.awayScore} />}
           <div className="flex min-w-0 flex-1 items-center justify-end gap-2.5">
             <p className="truncate text-sm font-semibold">{fixture.awayTeam}</p>
-            <TeamCrest name={fixture.awayTeam} />
+            <TeamCrest name={fixture.awayTeam} logo={fixture.awayLogo} />
           </div>
         </div>
         {!live && !finished && (

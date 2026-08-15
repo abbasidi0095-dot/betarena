@@ -47,6 +47,7 @@ model League {
   country    String
   logo       String?
   season     Int
+  standings  Json     @default("[]")
 
   fixtures Fixture[]
 }
@@ -59,10 +60,13 @@ model Fixture {
   status     String   @default("SCHEDULED")
   homeTeam   String
   awayTeam   String
+  homeLogo   String?
+  awayLogo   String?
   homeScore  Int      @default(0)
   awayScore  Int      @default(0)
   minute     Int?
   events     Json     @default("[]")
+  lineups    Json     @default("[]")
 
   league  League   @relation(fields: [leagueId], references: [id], onDelete: Cascade)
   markets Market[]

@@ -30,7 +30,20 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
           onClick={onClose}
           className="flex items-center justify-between rounded-lg px-2 py-2 text-sm text-text-secondary hover:bg-surface-2 hover:text-white"
         >
-          <span className="truncate">{l.name}</span>
+          <span className="flex min-w-0 items-center gap-2">
+            {l.logo ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={l.logo}
+                alt=""
+                className="h-4 w-4 shrink-0 object-contain"
+                loading="lazy"
+              />
+            ) : (
+              <span className="h-4 w-4 shrink-0 rounded-full bg-surface-2" />
+            )}
+            <span className="truncate">{l.name}</span>
+          </span>
           <span className="ml-2 shrink-0 rounded-full bg-surface-2 px-1.5 text-[10px] tabular-nums text-text-tertiary">
             {l.fixtureCount}
           </span>

@@ -5,7 +5,6 @@
  */
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
-import { teamsFromHash, generateRealisticOdds, buildScorerSelections } from "../src/lib/betting/odds-model";
 
 const prisma = new PrismaClient();
 
@@ -57,107 +56,9 @@ async function seedBots() {
   console.log(`[seed] ${BOT_NAMES.length} bot users ready`);
 }
 
-/* ---- Demo fixtures ---- */
-
-const TEAMS: [string, string][] = [
-  ["Arsenal", "Chelsea"], ["Liverpool", "Manchester City"], ["Tottenham", "Newcastle"],
-  ["Aston Villa", "Brighton"], ["West Ham", "Everton"], ["Real Madrid", "Barcelona"],
-  ["Atlético Madrid", "Sevilla"], ["Inter", "Juventus"], ["Milan", "Napoli"],
-  ["Bayern München", "Borussia Dortmund"], ["RB Leipzig", "Leverkusen"],
-  ["PSG", "Marseille"], ["Monaco", "Lyon"], ["Ajax", "PSV"], ["Benfica", "Porto"],
-  ["Sporting CP", "Braga"], ["Galatasaray", "Fenerbahçe"], ["Celtic", "Rangers"],
-];
-
-async function seedDemoFixtures() {
-  const fixtureCount = await prisma.fixture.count();
-  if (fixtureCount > 0) {
-    console.log(`[seed] ${fixtureCount} fixtures already exist — skipping demo data`);
-    return;
-  }
-
-  const rand = seededRandom(7);
-  const league = await prisma.league.create({
-    data: {
-      providerId: "demo-league-1",
-      name: "BetArena Demo League",
-      country: "Demo",
-      season: 2026,
-    },
-  });
-
-  const now = Date.now();
-  let created = 0;
-  for (let i = 0; i < TEAMS.length; i++) {
-    const [home, away] = TEAMS[i];
-    // Mix of states: 4 live, some finished today, mostly upcoming
-    const mode = i < 4 ? "live" : i < 7 ? "finished" : "upcoming";
-    const kickoff =
-      mode === "live"
-        ? new Date(now - (30 + i * 12) * 60 * 1000)
-        : mode === "finished"
-          ? new Date(now - 4 * 3600 * 1000)
-          : new Date(now + (i - 6) * 3.5 * 3600 * 1000);
-
-    const homeScore = mode === "upcoming" ? 0 : Math.floor(rand() * 3);
-    const awayScore = mode === "upcoming" ? 0 : Math.floor(rand() * 3);
-
-    const events =
-      mode === "upcoming"
-        ? []
-        : [
-            { type: "goal" as const, minute: 12, team: "home" as const, player: `${home} No.9`, zone: 2 },
-            ...(awayScore > 0
-              ? [{ type: "goal" as const, minute: 34, team: "away" as const, player: `${away} No.10`, zone: 8 }]
-              : []),
-            { type: "card" as const, minute: 55, team: "away" as const, player: `${away} No.6`, zone: 5 },
-          ];
-
-    const fixture = await prisma.fixture.create({
-      data: {
-        providerId: `demo-${i + 1}`,
-        leagueId: league.id,
-        kickoff,
-        status: mode === "live" ? "LIVE" : mode === "finished" ? "FINISHED" : "SCHEDULED",
-        homeTeam: home,
-        awayTeam: away,
-        homeScore,
-        awayScore,
-        minute: mode === "live" ? 30 + i * 12 : mode === "finished" ? 90 : null,
-        events: events as any,
-      },
-    });
-
-    // Realistic pro-book odds from the Poisson strength model
-    const o = generateRealisticOdds(teamsFromHash(home), teamsFromHash(away));
-    const scorers = buildScorerSelections(home, away, o);
-    const marketDefs: Record<string, Record<string, number>> = {
-      h2h: { home: o.home, draw: o.draw, away: o.away },
-      totals: { "over_2.5": o.over_2_5, "under_2.5": o.under_2_5 },
-      btts: { btts_yes: o.btts_yes, btts_no: o.btts_no },
-    };
-    for (const [key, selections] of Object.entries(marketDefs)) {
-      const market = await prisma.market.create({
-        data: {
-          fixtureId: fixture.id,
-          key,
-          status: mode === "finished" ? "CLOSED" : "OPEN",
-        },
-      });
-      for (const [selectionKey, value] of Object.entries(selections)) {
-        await prisma.odds.create({
-          data: { marketId: market.id, selectionKey, value },
-        });
-      }
-    }
-    void scorers;
-    created++;
-  }
-  console.log(`[seed] created ${created} demo fixtures with realistic pro-book odds`);
-}
 
 async function main() {
   await seedBots();
-  await seedDemoFixtures();
 }
 
 main()
