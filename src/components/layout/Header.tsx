@@ -15,8 +15,8 @@ import {
 } from "lucide-react";
 import { useUser } from "@/stores/user";
 import { useSlip } from "@/stores/slip";
+import { NumberTicker } from "@/components/ui/NumberTicker";
 import { api, type FixtureRow } from "@/lib/client/api";
-import { formatPoints } from "@/lib/client/format";
 import { SearchOverlay } from "@/components/search/SearchOverlay";
 
 export function Header({ onOpenSidebar }: { onOpenSidebar: () => void }) {
@@ -104,9 +104,10 @@ export function Header({ onOpenSidebar }: { onOpenSidebar: () => void }) {
               </Link>
 
               <div className="flex items-center gap-1 rounded-full bg-white/15 px-2 py-1.5 backdrop-blur sm:gap-1.5 sm:px-3">
-                <span className="text-xs font-bold tabular-nums text-white">
-                  {formatPoints(user.pointBalance)}
-                </span>
+                <NumberTicker
+                  value={user.pointBalance}
+                  className="text-xs font-bold text-white"
+                />
                 <span className="hidden text-[10px] font-medium text-white/70 sm:inline">PTS</span>
                 {(user.canClaimDailyBonus || user.canRescue) && (
                   <Link href="/profile" aria-label="Claim bonus" className="hidden sm:block">

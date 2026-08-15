@@ -1,15 +1,16 @@
 "use client";
 
 import { use, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { ChevronDown, Target, SplitSquareHorizontal, Dice5, Users, Goal } from "lucide-react";
+import { ChevronDown, ArrowLeft, Target, SplitSquareHorizontal, Dice5, Users, Goal } from "lucide-react";
 import { api, type FixtureRow } from "@/lib/client/api";
+import { AppShell } from "@/components/layout/AppShell";
 import { OddsButton } from "@/components/feed/OddsButton";
 import { ScoreBoard } from "@/components/tracker/ScoreBoard";
 import { EventFeed } from "@/components/tracker/EventFeed";
 import { PitchVisualizer } from "@/components/tracker/PitchVisualizer";
 import { TeamCrest } from "@/components/feed/TeamCrest";
-// MARKET_LABELS unused here
 import type { DerivedMarkets, DerivedSelection } from "@/lib/betting/derived-markets";
 
 interface FixtureDetail {
@@ -19,6 +20,7 @@ interface FixtureDetail {
 
 export default function FixturePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
+  const router = useRouter();
   const [data, setData] = useState<FixtureDetail | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [openPanel, setOpenPanel] = useState<string | null>("h2h");
@@ -39,11 +41,24 @@ export default function FixturePage({ params }: { params: Promise<{ id: string }
     };
   }, [id]);
 
+  const goBack = () => {
+    if (window.history.length > 1) router.back();
+    else router.push("/");
+  };
+
   if (notFound) {
-    return <p className="py-20 text-center text-sm text-text-tertiary">Match not found</p>;
+    return (
+      <AppShell>
+        <p className="py-20 text-center text-sm text-text-tertiary">Match not found</p>
+      </AppShell>
+    );
   }
   if (!data) {
-    return <p className="py-20 text-center text-sm text-text-tertiary">Loading match…</p>;
+    return (
+      <AppShell>
+        <p className="py-20 text-center text-sm text-text-tertiary">Loading match…</p>
+      </AppShell>
+    );
   }
 
   const { fixture, derivedMarkets } = data;
@@ -124,20 +139,28 @@ export default function FixturePage({ params }: { params: Promise<{ id: string }
   ];
 
   return (
-    <div className="mx-auto max-w-2xl">
-      <div className="mb-4 flex items-center justify-between">
-        <p className="text-xs text-text-secondary">
-          {fixture.league.country} · {fixture.league.name}
-        </p>
-        <button
-          onClick={() => setOpenPanel(openPanel === "all" ? null : "all")}
-          className="text-[11px] font-semibold text-betclic-red"
-        >
-          {openPanel === "all" ? "Collapse all" : "Show all markets"}
-        </button>
-      </div>
+    <AppShell>
+      <div className="mx-auto max-w-2xl">
+        <div className="sticky top-0 z-20 -mx-3 mb-3 flex items-center gap-1 border-b border-surface-2/60 bg-bg/90 px-3 py-2 backdrop-blur lg:-mx-6 lg:px-6">
+          <button
+            onClick={goBack}
+            className="flex items-center gap-1.5 rounded-full bg-surface-2 px-3 py-1.5 text-xs font-semibold text-text-secondary transition-colors hover:bg-surface-3 hover:text-white"
+          >
+            <ArrowLeft size={14} />
+            Back
+          </button>
+          <p className="min-w-0 flex-1 truncate text-right text-[11px] text-text-tertiary">
+            {fixture.league.country} · {fixture.league.name}
+          </p>
+          <button
+            onClick={() => setOpenPanel(openPanel === "all" ? null : "all")}
+            className="shrink-0 text-[11px] font-semibold text-betclic-red"
+          >
+            {openPanel === "all" ? "Collapse" : "All markets"}
+          </button>
+        </div>
 
-      <ScoreBoard fixture={fixture} />
+        <ScoreBoard fixture={fixture} />
 
       {/* team headers with crests */}
       <div className="mt-4 flex items-center justify-between gap-3 rounded-xl bg-surface px-4 py-3">
@@ -181,7 +204,8 @@ export default function FixturePage({ params }: { params: Promise<{ id: string }
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </AppShell>
   );
 }
 
