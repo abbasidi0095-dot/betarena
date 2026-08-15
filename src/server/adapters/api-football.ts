@@ -18,6 +18,8 @@ export interface NormalizedFixture {
   status: "SCHEDULED" | "LIVE" | "FINISHED";
   homeTeam: string;
   awayTeam: string;
+  homeTeamId?: number;
+  awayTeamId?: number;
   homeLogo?: string;
   awayLogo?: string;
   homeScore: number;
@@ -125,6 +127,8 @@ function mapFixture(raw: any): NormalizedFixture {
     status: mapStatus(raw.fixture?.status?.short ?? "NS"),
     homeTeam: raw.teams?.home?.name ?? "Home",
     awayTeam: raw.teams?.away?.name ?? "Away",
+    homeTeamId: raw.teams?.home?.id ?? undefined,
+    awayTeamId: raw.teams?.away?.id ?? undefined,
     homeLogo: raw.teams?.home?.logo ?? undefined,
     awayLogo: raw.teams?.away?.logo ?? undefined,
     homeScore: raw.goals?.home ?? 0,

@@ -42,6 +42,8 @@ export async function refreshFixtures(_io?: Server): Promise<void> {
           status: f.status,
           homeTeam: f.homeTeam,
           awayTeam: f.awayTeam,
+          homeTeamId: f.homeTeamId ?? undefined,
+          awayTeamId: f.awayTeamId ?? undefined,
           homeLogo: f.homeLogo,
           awayLogo: f.awayLogo,
           homeScore: f.homeScore,
@@ -53,6 +55,8 @@ export async function refreshFixtures(_io?: Server): Promise<void> {
           status: f.status,
           homeTeam: f.homeTeam,
           awayTeam: f.awayTeam,
+          homeTeamId: f.homeTeamId ?? undefined,
+          awayTeamId: f.awayTeamId ?? undefined,
           homeLogo: f.homeLogo ?? undefined,
           awayLogo: f.awayLogo ?? undefined,
           homeScore: f.homeScore,
@@ -157,6 +161,8 @@ export async function refreshLineups(_io?: Server): Promise<void> {
   for (const fixture of fixtures) {
     const rows = lineups.filter((l) => l.fixtureProviderId === fixture.providerId);
     if (rows.length < 2) continue;
+    const homeRow = rows.find((r) => r.teamName === fixture.homeTeam);
+    const awayRow = rows.find((r) => r.teamName === fixture.awayTeam);
     const normalized = rows.map((r) => ({
       team: r.teamName === fixture.homeTeam ? "home" : r.teamName === fixture.awayTeam ? "away" : "unknown",
       teamName: r.teamName,
@@ -166,7 +172,11 @@ export async function refreshLineups(_io?: Server): Promise<void> {
     if (normalized.some((n) => n.team === "unknown")) continue;
     await prisma.fixture.update({
       where: { providerId: fixture.providerId },
-      data: { lineups: normalized as any },
+      data: {
+        lineups: normalized as any,
+        homeTeamId: homeRow?.teamId ? Number(homeRow.teamId) : undefined,
+        awayTeamId: awayRow?.teamId ? Number(awayRow.teamId) : undefined,
+      },
     });
   }
 }

@@ -61,6 +61,8 @@ model Fixture {
   status     String   @default("SCHEDULED")
   homeTeam   String
   awayTeam   String
+  homeTeamId Int?
+  awayTeamId Int?
   homeLogo   String?
   awayLogo   String?
   homeScore  Int      @default(0)

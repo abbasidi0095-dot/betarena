@@ -70,7 +70,7 @@ async function main() {
   if (apiFootball.isConfigured()) {
     startInterval("fixtures", 12 * 3600 * 1000, () => refreshFixtures(io));
     startInterval("standings", 24 * 3600 * 1000, () => refreshStandings(io));
-    startInterval("lineups", 3 * 3600 * 1000, () => refreshLineups(io));
+    startInterval("lineups", 15 * 60 * 1000, () => refreshLineups(io));
   }
   if (footballData.isConfigured()) {
     // 1 poll/min rotating 4 free keys — true minute-by-minute live updates
