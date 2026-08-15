@@ -47,6 +47,7 @@ model League {
   country    String
   logo       String?
   season     Int
+  priority   Int      @default(0)
   standings  Json     @default("[]")
 
   fixtures Fixture[]
