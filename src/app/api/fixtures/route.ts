@@ -33,7 +33,7 @@ export async function GET(req: NextRequest) {
         include: { odds: true },
       },
     },
-    orderBy: [{ status: "desc" }, { kickoff: "asc" }],
+    orderBy: [{ league: { priority: "asc" } }, { status: "desc" }, { kickoff: "asc" }],
     skip: offset,
     take: limit + 1,
   });
