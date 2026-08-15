@@ -1,6 +1,6 @@
 # BetArena — Session Resume Notes
 
-Last updated: 2026-08-14 (session by opencode AI assistant)
+Last updated: 2026-08-15 (session by opencode AI assistant)
 
 ## How to resume
 
@@ -34,6 +34,28 @@ Last updated: 2026-08-14 (session by opencode AI assistant)
    duplicate an API-Football fixture (kickoff ±20min + token-subset team
    names, e.g. "Alaves" vs "Deportivo Alavés"). Bet legs are migrated to the
    surviving twin before deletion. Runs at boot + 12h interval.
+6. **DONE 2026-08-15**: Betclic visual restyle — gold `#FFC700` odds pills
+   with implied-probability bars, dark `#181a20` cards (`--color-card-dark`,
+   `--color-betclic-gold` tokens), restyled MatchCard (league strip, centered
+   team row + score pill, 1X2 gold buttons), ScoreBoard (crests, gold accents,
+   "vs" pill), and fixture-page market panels (2-col layout for DC/handicap/
+   exact). Commits: `d8a4d77`, `8bccb23`.
+7. **DONE 2026-08-15**: Real scorer names only — anytime-scorer market is
+   derived exclusively from real lineups; without lineups it is hidden
+   (`deriveMarkets` returns `[]`, page filters empty markets). Settlement
+   already keyed off real goal events, so no fake name could ever win.
+   Scheduler lineup refresh tightened to 15-min. Commits: `c20ec9e`, `9373a2b`.
+8. **DONE 2026-08-15**: Statistiques tab — `GET /api/fixtures/[id]/stats`
+   (API-Football team last-5 + H2H, 15-min in-memory TTL cache, DB fallback
+   on quota/error; `Fixture.homeTeamId`/`awayTeamId` stored on upsert +
+   backfilled at boot). `FixtureStats` renders form guide (W/D/L), H2H list,
+   result split bar. Commits: `5864297`, `ab15eda`.
+9. **DONE 2026-08-15**: Communauté tab — `GET /api/community` (public feed
+   incl. bots + top bettors by win rate, min 3 settled bets, today/week
+   periods via `src/lib/community/rank.ts`). UI: `/community` page,
+   fixture-page tab, 1-click "Copier le pari" (client-side legs → slip via
+   `useSlip.add()`), nav links in MobileNav/Header/Sidebar. Commits:
+   `a6cdc0d`, `16a4e09`.
 
 ## Useful commands
 

@@ -180,3 +180,23 @@ export async function refreshLineups(_io?: Server): Promise<void> {
     });
   }
 }
+
+/** One-time backfill: store API team ids on existing api-football fixtures (max 10, 1 request each). */
+export async function backfillTeamIds(): Promise<void> {
+  const fixtures = await prisma.fixture.findMany({
+    where: { homeTeamId: null, providerId: { not: { startsWith: "fd:" } } },
+    select: { id: true, providerId: true },
+    take: 10,
+  });
+  let changed = 0;
+  for (const f of fixtures) {
+    const raw = await apiFootball.getFixturesByProviderId(f.providerId);
+    if (!raw?.homeTeamId || !raw?.awayTeamId) continue;
+    await prisma.fixture.update({
+      where: { id: f.id },
+      data: { homeTeamId: raw.homeTeamId, awayTeamId: raw.awayTeamId },
+    });
+    changed++;
+  }
+  if (changed > 0) console.log(`[fixtures] backfilled team ids for ${changed} fixtures`);
+}

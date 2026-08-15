@@ -7,7 +7,7 @@ import { createServer } from "http";
 import next from "next";
 import { setupSocket } from "@/server/socket";
 import { startInterval } from "@/server/scheduler";
-import { refreshFixtures, refreshStandings, refreshLineups, syncLeaguePriorities } from "@/server/scheduler/fixtures";
+import { refreshFixtures, refreshStandings, refreshLineups, syncLeaguePriorities, backfillTeamIds } from "@/server/scheduler/fixtures";
 import { refreshLiveMinutes } from "@/server/scheduler/scores";
 import { refreshRealOdds, backfillFallbackOdds } from "@/server/scheduler/odds";
 import { refreshWeekFixtures } from "@/server/scheduler/week";
@@ -53,6 +53,8 @@ async function main() {
   // Remove football-data duplicates of api-football fixtures (same match,
   // different provider spellings) so each match appears exactly once.
   await cleanupDuplicateFixtures().catch(() => undefined);
+  // Team ids for stats (H2H / last-5) — cheap, one-time, idempotent.
+  await backfillTeamIds().catch(() => undefined);
   if (oddsApi.isConfigured()) {
     console.log("[boot] The Odds API keys found — attaching real odds");
     await refreshRealOdds(io).catch(() => undefined);
