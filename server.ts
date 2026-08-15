@@ -7,7 +7,7 @@ import { createServer } from "http";
 import next from "next";
 import { setupSocket } from "@/server/socket";
 import { startInterval } from "@/server/scheduler";
-import { refreshFixtures, refreshStandings, refreshLineups, syncLeaguePriorities, backfillTeamIds } from "@/server/scheduler/fixtures";
+import { refreshFixtures, refreshStandings, refreshLineups, syncLeaguePriorities, backfillTeamIds, purgeNonProfessionalLeagues } from "@/server/scheduler/fixtures";
 import { refreshLiveMinutes, refreshLiveScores, driftLiveMinutes } from "@/server/scheduler/scores";
 import { refreshRealOdds, backfillFallbackOdds, refreshLiveFallbackOdds } from "@/server/scheduler/odds";
 import { refreshWeekFixtures } from "@/server/scheduler/week";
@@ -70,6 +70,9 @@ async function main() {
   // priority (leagues created before this feature, or skipped by dup-aware
   // syncs, would otherwise stay priority 0 forever).
   await syncLeaguePriorities().catch(() => undefined);
+  // Remove youth/amateur/reserve/friendly competitions — only genuine
+  // professional clubs belong on a betting feed.
+  await purgeNonProfessionalLeagues().catch(() => undefined);
 
   if (apiFootball.isConfigured()) {
     startInterval("fixtures", 12 * 3600 * 1000, () => refreshFixtures(io));

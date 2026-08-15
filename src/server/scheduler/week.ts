@@ -2,7 +2,7 @@ import type { Server } from "socket.io";
 import { prisma } from "@/lib/db";
 import * as footballData from "@/server/adapters/football-data";
 import { normalizeTeam } from "@/server/scheduler/odds";
-import { leaguePriority } from "@/lib/leagues";
+import { leaguePriority, isProfessionalLeague } from "@/lib/leagues";
 
 /**
  * Full-week fixture sync via football-data.org (no free-tier date cap,
@@ -28,6 +28,7 @@ export async function refreshWeekFixtures(_io?: Server): Promise<void> {
   let created = 0;
   let skipped = 0;
   for (const f of fixtures) {
+    if (!isProfessionalLeague(f.competition.name)) continue;
     // League must be upserted even when the fixture is a dup — otherwise
     // priority never lands on leagues whose fixtures already exist.
     const league = await prisma.league.upsert({

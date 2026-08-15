@@ -1,7 +1,7 @@
 import type { Server } from "socket.io";
 import { prisma } from "@/lib/db";
 import * as apiFootball from "@/server/adapters/api-football";
-import { leaguePriority } from "@/lib/leagues";
+import { leaguePriority, isProfessionalLeague } from "@/lib/leagues";
 
 /** Today's matches (live events + lineups source) — API-Football free tier
  * caps lookups at ~3 days anyway; the full week comes from football-data. */
@@ -11,6 +11,7 @@ export async function refreshFixtures(_io?: Server): Promise<void> {
     const date = new Date(Date.now() + d * 24 * 3600 * 1000).toISOString().slice(0, 10);
     const fixtures = await apiFootball.getFixturesByDate(date);
     for (const f of fixtures) {
+      if (!isProfessionalLeague(f.league.name)) continue;
       const league = await prisma.league.upsert({
         where: { providerId: f.league.providerId },
         create: {
@@ -199,4 +200,48 @@ export async function backfillTeamIds(): Promise<void> {
     changed++;
   }
   if (changed > 0) console.log(`[fixtures] backfilled team ids for ${changed} fixtures`);
+}
+
+/**
+ * One-time purge of non-professional competitions (youth, reserves,
+ * amateurs, friendlies) from the platform. Open legs on those matches are
+ * settled VOID first (stake refunded), then the fixtures and leagues are
+ * removed. Idempotent: after the purge nothing recreates them because both
+ * fixture syncs filter with isProfessionalLeague.
+ */
+export async function purgeNonProfessionalLeagues(): Promise<void> {
+  const leagues = await prisma.league.findMany({
+    where: { fixtures: { some: {} } },
+    select: { id: true, name: true },
+  });
+  const doomed = leagues.filter((l) => !isProfessionalLeague(l.name));
+  if (doomed.length === 0) return;
+
+  const leagueIds = doomed.map((l) => l.id);
+  const fixtures = await prisma.fixture.findMany({
+    where: { leagueId: { in: leagueIds } },
+    select: { id: true },
+  });
+  const fixtureIds = fixtures.map((f) => f.id);
+
+  let voided = 0;
+  if (fixtureIds.length > 0) {
+    const openLegs = await prisma.betLeg.updateMany({
+      where: { fixtureId: { in: fixtureIds }, status: "OPEN" },
+      data: { status: "VOID", settledAt: new Date() },
+    });
+    voided = openLegs.count;
+
+    // Settle any bets that just became fully resolved, refunding stakes.
+    const { runSettlementSweep } = await import("@/lib/bets/settle");
+    await runSettlementSweep().catch(() => undefined);
+
+    await prisma.fixture.deleteMany({ where: { id: { in: fixtureIds } } });
+  }
+  await prisma.league.deleteMany({ where: { id: { in: leagueIds } } });
+
+  console.log(
+    `[purge] removed ${fixtureIds.length} fixtures across ${doomed.length} non-professional leagues` +
+      (voided > 0 ? ` (${voided} open legs voided + refunded)` : ""),
+  );
 }
