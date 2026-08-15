@@ -139,41 +139,63 @@ function mapFixture(raw: any): NormalizedFixture {
 }
 
 async function call(path: string): Promise<unknown[]> {
-  const p = getPool();
-  const lastError = new AllKeysExhaustedError("api-football");
-  // Try up to pool-size attempts so each key gets one shot per call.
-  for (let attempt = 0; attempt < Math.max(p.size, 1); attempt++) {
-    let key: string;
-    try {
-      key = p.next();
-    } catch {
-      throw lastError;
-    }
-    const res: AdapterResponse = await fetchJson(
-      `${BASE}${path}${path.includes("?") ? "&" : "?"}timezone=UTC`,
-      { headers: { "x-apisports-key": key } },
-    );
-    if (res.status === 401 || res.status === 403) {
-      p.reportFailure(key, "auth");
-      continue;
-    }
-    if (res.status === 429) {
-      p.reportFailure(key, "quota");
-      continue;
-    }
-    const body = res.json as any;
-    if (!body || body.errors?.token || Array.isArray(body.errors)) {
-      // api-sports returns 200 with an errors object for key problems
-      const errs = body?.errors;
-      if (errs?.token) {
+  // Single free key: serialize every request so concurrent schedulers
+  // (standings + lineups + backfill at boot) can't race each other into
+  // rate-limit 429s and poison the key for an hour.
+  return withMutex(async () => {
+    const p = getPool();
+    const lastError = new AllKeysExhaustedError("api-football");
+    // Try up to pool-size attempts so each key gets one shot per call.
+    for (let attempt = 0; attempt < Math.max(p.size, 1); attempt++) {
+      let key: string;
+      try {
+        key = p.next();
+      } catch {
+        throw lastError;
+      }
+      const res: AdapterResponse = await fetchJson(
+        `${BASE}${path}${path.includes("?") ? "&" : "?"}timezone=UTC`,
+        { headers: { "x-apisports-key": key } },
+      );
+      if (res.status === 401 || res.status === 403) {
         p.reportFailure(key, "auth");
         continue;
       }
+      if (res.status === 429) {
+        // Distinguish the per-minute rate limit from the daily quota using
+        // paging: current >= total means the day's budget is gone.
+        const body = res.json as any;
+        const current = body?.paging?.current ?? 0;
+        const total = body?.paging?.total ?? 0;
+        const daily = total > 0 && current >= total;
+        p.reportFailure(key, "quota", daily ? undefined : 60_000);
+        continue;
+      }
+      const body = res.json as any;
+      if (!body || body.errors?.token || Array.isArray(body.errors)) {
+        // api-sports returns 200 with an errors object for key problems
+        const errs = body?.errors;
+        if (errs?.token) {
+          p.reportFailure(key, "auth");
+          continue;
+        }
+      }
+      if (Array.isArray(body?.response)) return body.response as unknown[];
+      return [];
     }
-    if (Array.isArray(body?.response)) return body.response as unknown[];
-    return [];
-  }
-  throw lastError;
+    throw lastError;
+  });
+}
+
+let mutexChain: Promise<unknown> = Promise.resolve();
+
+function withMutex<T>(fn: () => Promise<T>): Promise<T> {
+  const run = mutexChain.then(fn, fn);
+  mutexChain = run.then(
+    () => undefined,
+    () => undefined,
+  );
+  return run;
 }
 
 export async function getFixturesByDate(dateISO: string): Promise<NormalizedFixture[]> {

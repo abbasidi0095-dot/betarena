@@ -59,13 +59,15 @@ export class KeyPool {
     return false;
   }
 
-  reportFailure(key: string, kind: FailureKind): void {
+  reportFailure(key: string, kind: FailureKind, cooldownMs?: number): void {
     const state = this.states.find((s) => s.key === key);
     if (!state) return;
     if (kind === "auth") {
       state.disabled = true;
     } else if (kind === "quota") {
-      state.exhaustedUntil = this.now() + QUOTA_COOLDOWN_MS;
+      // Per-minute rate limits should recover in seconds; daily quotas need
+      // the long cooldown. Callers pass the right window via cooldownMs.
+      state.exhaustedUntil = this.now() + (cooldownMs ?? QUOTA_COOLDOWN_MS);
     }
     // network: transient, keep the key in rotation
   }
