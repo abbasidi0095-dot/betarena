@@ -18,6 +18,7 @@ export interface ScoreUpdate {
   homeScore: number;
   awayScore: number;
   minute: number | null;
+  status?: string;
   events: FixtureRow["events"];
 }
 

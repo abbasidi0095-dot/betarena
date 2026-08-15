@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import * as apiFootball from "@/server/adapters/api-football";
 import * as footballData from "@/server/adapters/football-data";
 import { normalizeTeam, refreshLiveFallbackOdds } from "@/server/scheduler/odds";
-import { liveMinuteFromElapsed } from "@/lib/live/minute";
+import { liveMatchState } from "@/lib/live/minute";
 
 /** Poll live fixtures; emit score:update on any change. */
 export async function refreshLiveScores(io?: Server): Promise<void> {
@@ -55,8 +55,9 @@ export async function refreshLiveScores(io?: Server): Promise<void> {
  * Minute drift for LIVE fixtures with no live data source (e.g. leagues the
  * free APIs do not cover, or a provider that is quota-exhausted). The match
  * clock is a real function of kickoff + wall time, so we keep it honest:
- * minute = elapsed first half, halftime break, then second half, capped at
- * 90. Never regresses, never fabricates a result, never claims full time.
+ * minute = elapsed first half, halftime break, then second half, added time,
+ * and once a match is far beyond the 90th minute it is marked FINISHED with
+ * the last known score so bets settle. Never regresses, never invents goals.
  */
 export async function driftLiveMinutes(io?: Server): Promise<void> {
   const fixtures = await prisma.fixture.findMany({
@@ -75,12 +76,38 @@ export async function driftLiveMinutes(io?: Server): Promise<void> {
   let drifted = 0;
 
   for (const f of fixtures) {
-    const minute = liveMinuteFromElapsed(f.kickoff, now);
-    if (minute <= (f.minute ?? 0)) continue;
+    const state = liveMatchState(f.kickoff, now);
+
+    if (state.finished) {
+      await prisma.fixture.update({
+        where: { id: f.id },
+        data: { status: "FINISHED", minute: 90 },
+      });
+      drifted++;
+      io?.to(`live:fixture:${f.id}`).emit("score:update", {
+        fixtureId: f.id,
+        homeScore: f.homeScore,
+        awayScore: f.awayScore,
+        minute: 90,
+        status: "FINISHED",
+        events: [],
+      });
+      io?.to("live").emit("score:update", {
+        fixtureId: f.id,
+        homeScore: f.homeScore,
+        awayScore: f.awayScore,
+        minute: 90,
+        status: "FINISHED",
+        events: [],
+      });
+      continue;
+    }
+
+    if (state.minute <= (f.minute ?? 0)) continue;
 
     await prisma.fixture.update({
       where: { id: f.id },
-      data: { minute },
+      data: { minute: state.minute },
     });
 
     drifted++;
@@ -88,7 +115,7 @@ export async function driftLiveMinutes(io?: Server): Promise<void> {
       fixtureId: f.id,
       homeScore: f.homeScore,
       awayScore: f.awayScore,
-      minute,
+      minute: state.minute,
       events: [],
     };
     io?.to(`live:fixture:${f.id}`).emit("score:update", payload);

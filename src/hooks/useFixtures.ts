@@ -64,7 +64,7 @@ export function useFixtures(
       awayScore: upd.awayScore,
       minute: upd.minute,
       events: upd.events,
-      status: "LIVE" as const,
+      status: (upd.status ?? "LIVE") as FixtureRow["status"],
     };
   });
 

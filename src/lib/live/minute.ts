@@ -2,21 +2,43 @@
  * Live-clock helpers shared by the score schedulers.
  */
 
+/** Wall-clock minutes after which a live match is treated as finished. */
+export const LIVE_MAX_ELAPSED_MIN = 115;
+
+export interface LiveMatchState {
+  minute: number;
+  finished: boolean;
+}
+
 /**
- * The minute a live match should show given its kickoff and the current wall
- * clock, modelling a standard 90-minute half split with a 15-minute break:
+ * The state a live match should be in given its kickoff and the current wall
+ * clock, modelling a standard 90-minute split with a 15-minute break:
  *  - first half: elapsed minutes 1..45
  *  - halftime: 45
- *  - second half: elapsed - 15, capped at 90
- * This only ever moves forward from the kickoff time; it says nothing about
- * stoppage time or whether the match has actually finished.
+ *  - second half: elapsed - 15
+ *  - added time: 91..100 for the final ~10 minutes of play
+ *  - finished: once far beyond the 90th minute (kickoff + 115 wall minutes,
+ *    covering even extreme stoppage), the match is marked FINISHED with the
+ *    last known score — the truthful end state when no provider reports it.
+ */
+export function liveMatchState(kickoff: Date, now: Date): LiveMatchState {
+  const elapsed = Math.floor((now.getTime() - kickoff.getTime()) / 60_000);
+  if (elapsed <= 0) return { minute: 0, finished: false };
+  if (elapsed <= 45) return { minute: elapsed, finished: false };
+  if (elapsed <= 60) return { minute: 45, finished: false };
+  if (elapsed <= 105) return { minute: elapsed - 15, finished: false };
+  if (elapsed <= LIVE_MAX_ELAPSED_MIN) {
+    return { minute: 90 + (elapsed - 105), finished: false };
+  }
+  return { minute: 90, finished: true };
+}
+
+/**
+ * The minute a live match should show given its kickoff and the current wall
+ * clock. See {@link liveMatchState}.
  */
 export function liveMinuteFromElapsed(kickoff: Date, now: Date): number {
-  const elapsed = Math.floor((now.getTime() - kickoff.getTime()) / 60_000);
-  if (elapsed <= 0) return 0;
-  if (elapsed <= 45) return elapsed;
-  if (elapsed <= 60) return 45;
-  return Math.min(90, elapsed - 15);
+  return liveMatchState(kickoff, now).minute;
 }
 
 /**
