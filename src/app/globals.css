@@ -3,6 +3,10 @@
 @theme {
   --color-betclic-red: #e50813;
   --color-betclic-red-dark: #b4060f;
+  --color-betclic-gold: #ffc700;
+  --color-betclic-gold-hover: #e5b300;
+  --color-card-dark: #181a20;
+  --color-card-border: #262a34;
   --color-bg: #121212;
   --color-surface: #1c1c1e;
   --color-surface-2: #26262a;

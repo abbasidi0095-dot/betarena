@@ -16,6 +16,8 @@ interface OddsButtonProps {
   value: number;
   disabled?: boolean;
   compact?: boolean;
+  /** Show a thin implied-probability bar along the bottom edge. */
+  probBar?: boolean;
 }
 
 export function OddsButton({
@@ -27,6 +29,7 @@ export function OddsButton({
   value,
   disabled,
   compact,
+  probBar,
 }: OddsButtonProps) {
   const selections = useSlip((s) => s.selections);
   const toggle = useSlip((s) => s.toggle);
@@ -37,6 +40,7 @@ export function OddsButton({
   const active = isSelected(selections, fixtureId, marketKey, selectionKey);
   const displayValue = flash?.value ?? value;
   const fresh = flash && Date.now() - flash.at < 2000;
+  const prob = Math.min(1, Math.max(0.02, 1 / displayValue));
 
   const handle = () => {
     const sel: Selection = {
@@ -59,14 +63,19 @@ export function OddsButton({
       onClick={handle}
       disabled={disabled}
       className={cn(
-        "relative flex min-w-0 w-full flex-col items-center justify-center rounded-lg py-2 transition-colors duration-150",
+        "relative flex min-w-0 w-full flex-col items-center justify-center overflow-hidden rounded-xl py-2 transition-colors duration-150",
         compact ? "text-[12px]" : "text-sm",
         active
-          ? "bg-betclic-red text-white shadow-[0_0_12px_rgba(229,8,19,0.45)]"
-          : "bg-surface-2 text-text-primary hover:bg-surface-3 active:bg-surface-3",
+          ? "bg-card-dark text-betclic-gold ring-2 ring-betclic-gold"
+          : "bg-betclic-gold text-black hover:bg-betclic-gold-hover active:bg-betclic-gold-hover",
         disabled && "cursor-not-allowed opacity-40",
       )}
     >
+      {!compact && (
+        <span className="mb-0.5 max-w-full truncate text-[9px] font-semibold uppercase tracking-wide text-black/60">
+          {SELECTION_SHORT[selectionKey] ?? selectionName}
+        </span>
+      )}
       <motion.span
         key={`${displayValue}-${fresh ? flash!.at : "stable"}`}
         initial={fresh ? { opacity: 0.3, scale: 0.92 } : false}
@@ -80,10 +89,14 @@ export function OddsButton({
       >
         {oddsToString(displayValue)}
       </motion.span>
-      {!compact && (
-        <span className="mt-0.5 text-[9px] font-medium uppercase tracking-wide text-text-secondary">
-          {SELECTION_SHORT[selectionKey] ?? selectionName}
-        </span>
+      {probBar && (
+        <span
+          className={cn(
+            "absolute bottom-0 left-0 h-[3px] rounded-full transition-all duration-300",
+            active ? "bg-betclic-gold" : "bg-black/50",
+          )}
+          style={{ width: `${prob * 100}%` }}
+        />
       )}
     </motion.button>
   );
