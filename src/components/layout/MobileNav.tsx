@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { motion } from "framer-motion";
 import { Home, Radio, Trophy, LayoutGrid, User } from "lucide-react";
 import { useSlip } from "@/stores/slip";
 import { cn } from "@/lib/client/cn";
@@ -17,6 +18,7 @@ const items = [
 export function MobileNav() {
   const pathname = usePathname();
   const slipCount = useSlip((s) => s.selections.length);
+  const lastAdded = useSlip((s) => s.lastAdded);
   const openSlip = useSlip((s) => s.open);
 
   return (
@@ -27,13 +29,17 @@ export function MobileNav() {
           return (
             <div key={href} className={cn("flex-1", i === 2 ? "relative" : "")}>
               {i === 2 && slipCount > 0 ? (
-                <button
+                <motion.button
+                  key={lastAdded}
+                  initial={{ scale: 0.6, y: 10 }}
+                  animate={{ scale: 1, y: 0 }}
+                  transition={{ type: "spring", stiffness: 500, damping: 16 }}
                   onClick={openSlip}
                   className="mx-auto -mt-5 flex h-12 w-12 items-center justify-center rounded-full bg-betclic-red text-white shadow-lg shadow-betclic-red/30"
                   aria-label="Open bet slip"
                 >
-                  <span className="text-sm font-bold tabular-nums">{slipCount}</span>
-                </button>
+                  <span className="text-sm font-black tabular-nums">{slipCount}</span>
+                </motion.button>
               ) : (
                 <Link
                   href={href}

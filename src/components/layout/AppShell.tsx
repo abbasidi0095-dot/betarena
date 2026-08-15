@@ -5,6 +5,7 @@ import { Header } from "./Header";
 import { Sidebar } from "./Sidebar";
 import { MobileNav } from "./MobileNav";
 import { BetSlip } from "@/components/slip/BetSlip";
+import { SlipFAB, SlipToast } from "@/components/slip/SlipFAB";
 import { WinToast } from "@/components/fx/WinToast";
 import { useSocket } from "@/hooks/useSocket";
 
@@ -23,6 +24,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
       <MobileNav />
       <BetSlip />
+      <SlipFAB />
+      <SlipToast />
       <WinToast />
     </div>
   );

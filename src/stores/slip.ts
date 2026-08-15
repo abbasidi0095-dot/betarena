@@ -15,6 +15,10 @@ export interface Selection {
 interface SlipState {
   selections: Selection[];
   isOpen: boolean;
+  /** Increments on every add/remove — drives pop animations on slip UI. */
+  lastAdded: number;
+  /** Name of the most recently added selection (toast). */
+  lastAddedName: string | null;
   toggle: (sel: Selection) => void;
   add: (sel: Selection) => void;
   remove: (fixtureId: string, marketKey: string, selectionKey: string) => void;
@@ -35,8 +39,10 @@ export const useSlip = create<SlipState>()(
     (set, get) => ({
       selections: [],
       isOpen: false,
+      lastAdded: 0,
+      lastAddedName: null,
       toggle: (sel) => {
-        const { selections } = get();
+        const { selections, lastAdded } = get();
         const exact = selections.find(
           (s) =>
             s.fixtureId === sel.fixtureId &&
@@ -44,33 +50,48 @@ export const useSlip = create<SlipState>()(
             s.selectionKey === sel.selectionKey,
         );
         if (exact) {
-          set({ selections: selections.filter((s) => s !== exact) });
+          set({
+            selections: selections.filter((s) => s !== exact),
+            lastAdded: lastAdded + 1,
+            lastAddedName: null,
+          });
           return;
         }
         const sameMarket = selections.filter(
           (s) => !(s.fixtureId === sel.fixtureId && s.marketKey === sel.marketKey),
         );
-        set({ selections: [...sameMarket, sel], isOpen: true });
+        // Betclic behavior: never auto-open the slip — show the FAB pop instead
+        set({
+          selections: [...sameMarket, sel],
+          lastAdded: lastAdded + 1,
+          lastAddedName: sel.selectionName,
+        });
       },
       add: (sel) => {
-        const { selections } = get();
+        const { selections, lastAdded } = get();
         const sameMarket = selections.filter(
           (s) => !(s.fixtureId === sel.fixtureId && s.marketKey === sel.marketKey),
         );
-        set({ selections: [...sameMarket, sel] });
+        set({
+          selections: [...sameMarket, sel],
+          lastAdded: lastAdded + 1,
+          lastAddedName: sel.selectionName,
+        });
       },
       remove: (fixtureId, marketKey, selectionKey) =>
-        set({
-          selections: get().selections.filter(
-            (s) =>
+        set((s) => ({
+          selections: s.selections.filter(
+            (sel) =>
               !(
-                s.fixtureId === fixtureId &&
-                s.marketKey === marketKey &&
-                s.selectionKey === selectionKey
+                sel.fixtureId === fixtureId &&
+                sel.marketKey === marketKey &&
+                sel.selectionKey === selectionKey
               ),
           ),
-        }),
-      clear: () => set({ selections: [] }),
+          lastAdded: s.lastAdded + 1,
+          lastAddedName: null,
+        })),
+      clear: () => set({ selections: [], lastAddedName: null }),
       open: () => set({ isOpen: true }),
       close: () => set({ isOpen: false }),
       updateOdds: (fixtureId, marketKey, selectionKey, odds) =>

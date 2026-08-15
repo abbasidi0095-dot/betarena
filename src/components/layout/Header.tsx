@@ -73,16 +73,16 @@ export function Header({ onOpenSidebar }: { onOpenSidebar: () => void }) {
 
         <button
           onClick={() => setSearchOpen(true)}
-          className="ml-1 flex flex-1 items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-left text-xs text-white/80 backdrop-blur transition-colors hover:bg-white/25 lg:ml-4 lg:max-w-md"
+          className="ml-1 flex min-w-0 flex-1 items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-left text-xs text-white/80 backdrop-blur transition-colors hover:bg-white/25 lg:ml-4 lg:max-w-md"
         >
-          <Search size={14} />
+          <Search size={14} className="shrink-0" />
           <span className="truncate">Search matches, leagues…</span>
         </button>
 
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
           <button
             onClick={toggleSound}
-            className="rounded-lg p-2 text-white/85 hover:bg-black/15"
+            className="hidden rounded-lg p-2 text-white/85 hover:bg-black/15 sm:block"
             aria-label={soundEnabled ? "Mute sounds" : "Enable sounds"}
           >
             {soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
@@ -103,13 +103,13 @@ export function Header({ onOpenSidebar }: { onOpenSidebar: () => void }) {
                 )}
               </Link>
 
-              <div className="flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 backdrop-blur">
+              <div className="flex items-center gap-1 rounded-full bg-white/15 px-2 py-1.5 backdrop-blur sm:gap-1.5 sm:px-3">
                 <span className="text-xs font-bold tabular-nums text-white">
                   {formatPoints(user.pointBalance)}
                 </span>
-                <span className="text-[10px] font-medium text-white/70">PTS</span>
+                <span className="hidden text-[10px] font-medium text-white/70 sm:inline">PTS</span>
                 {(user.canClaimDailyBonus || user.canRescue) && (
-                  <Link href="/profile" aria-label="Claim bonus">
+                  <Link href="/profile" aria-label="Claim bonus" className="hidden sm:block">
                     <Gift size={14} className="text-win" />
                   </Link>
                 )}
