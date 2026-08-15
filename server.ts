@@ -9,7 +9,7 @@ import { setupSocket } from "@/server/socket";
 import { startInterval } from "@/server/scheduler";
 import { refreshFixtures, refreshStandings, refreshLineups } from "@/server/scheduler/fixtures";
 import { refreshLiveMinutes } from "@/server/scheduler/scores";
-import { refreshRealOdds } from "@/server/scheduler/odds";
+import { refreshRealOdds, backfillFallbackOdds } from "@/server/scheduler/odds";
 import { refreshWeekFixtures } from "@/server/scheduler/week";
 import { runSettlement } from "@/server/scheduler/settlement";
 import * as apiFootball from "@/server/adapters/api-football";
@@ -53,6 +53,10 @@ async function main() {
     await refreshRealOdds(io).catch(() => undefined);
   }
 
+  // Deterministic fallback odds for any scheduled match the real-odds
+  // providers do not cover — runs after fixtures + real odds attach.
+  await backfillFallbackOdds(io).catch(() => undefined);
+
   if (apiFootball.isConfigured()) {
     startInterval("fixtures", 12 * 3600 * 1000, () => refreshFixtures(io));
     startInterval("standings", 24 * 3600 * 1000, () => refreshStandings(io));
@@ -68,6 +72,10 @@ async function main() {
     // 6 odds calls per cycle, 2 keys — ~12/day, comfortably under free quota
     startInterval("odds:real", 12 * 3600 * 1000, () => refreshRealOdds(io));
   }
+  // Keep fallback odds in sync as the fixture pool churns (6h cadence).
+  startInterval("odds:fallback", 6 * 3600 * 1000, async () => {
+    await backfillFallbackOdds(io);
+  });
   // Settlement always runs — it is local, no API needed.
   startInterval("settlement", 60 * 1000, () => runSettlement(io));
   // Run settlement once at boot to catch anything finished while down.

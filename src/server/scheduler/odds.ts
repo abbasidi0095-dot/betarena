@@ -1,6 +1,7 @@
 import type { Server } from "socket.io";
 import { prisma } from "@/lib/db";
 import * as oddsApi from "@/server/adapters/odds-api";
+import { fallbackOdds } from "@/lib/betting/fallback-odds";
 
 const STOP_WORDS = new Set([
   "fc", "cf", "sc", "afc", "fk", "bk", "ac", "as", "ss", "cd", "club", "de", "the",
@@ -147,4 +148,74 @@ export async function refreshRealOdds(io?: Server): Promise<void> {
 
     await upsertOddsForFixtures(events, fixtures, io);
   }
+}
+
+/**
+ * Deterministic fixed odds for scheduled fixtures that have no real odds
+ * (The Odds API covers only the top leagues). Runs at boot and on the
+ * interval; only touches fixtures with no h2h market, so real odds rows
+ * are never overwritten. Deterministic generator => stable across runs.
+ */
+export async function backfillFallbackOdds(io?: Server): Promise<number> {
+  const fixtures = await prisma.fixture.findMany({
+    where: {
+      status: "SCHEDULED",
+      markets: { none: { key: "h2h" } },
+    },
+    select: { id: true, homeTeam: true, awayTeam: true },
+  });
+  if (fixtures.length === 0) return 0;
+
+  const markets: Array<[string, Record<string, number>]> = [
+    ["h2h", {} as Record<string, number>],
+    ["totals", {} as Record<string, number>],
+    ["btts", {} as Record<string, number>],
+  ];
+  let written = 0;
+
+  for (const f of fixtures) {
+    const odds = fallbackOdds(f);
+    markets[0][1] = odds.h2h;
+    markets[1][1] = odds.totals;
+    markets[2][1] = odds.btts;
+
+    for (const [marketKey, selections] of markets) {
+      const market = await prisma.market.upsert({
+        where: { fixtureId_key: { fixtureId: f.id, key: marketKey } },
+        create: { fixtureId: f.id, key: marketKey, status: "OPEN" },
+        update: { status: "OPEN" },
+      });
+
+      for (const [selectionKey, value] of Object.entries(selections)) {
+        const existing = await prisma.odds.findUnique({
+          where: { marketId_selectionKey: { marketId: market.id, selectionKey } },
+        });
+
+        if (existing) {
+          if (Math.abs(existing.value.toNumber() - value) < 0.005) continue;
+          await prisma.odds.update({
+            where: { id: existing.id },
+            data: { value, previousValue: existing.value, updatedAt: new Date() },
+          });
+        } else {
+          await prisma.odds.create({
+            data: { marketId: market.id, selectionKey, value },
+          });
+        }
+
+        written++;
+        const payload = {
+          fixtureId: f.id,
+          marketKey,
+          selectionKey,
+          value,
+          previousValue: existing?.value.toNumber() ?? null,
+        };
+        io?.to(`live:fixture:${f.id}`).emit("odds:update", payload);
+        io?.to("live").emit("odds:update", payload);
+      }
+    }
+  }
+  console.log(`[odds:fallback] ${written} selections written for ${fixtures.length} fixtures`);
+  return written;
 }
