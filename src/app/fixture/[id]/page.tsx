@@ -138,6 +138,8 @@ export default function FixturePage({ params }: { params: Promise<{ id: string }
     },
   ];
 
+  const visibleMarkets = markets.filter((m) => m.selections.length > 0);
+
   return (
     <AppShell>
       <div className="mx-auto max-w-2xl">
@@ -175,7 +177,7 @@ export default function FixturePage({ params }: { params: Promise<{ id: string }
       </div>
 
       <div className="mt-4 space-y-2">
-        {markets.map((m) => (
+        {visibleMarkets.map((m) => (
           <MarketPanel
             key={m.key}
             market={m}

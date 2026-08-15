@@ -8,7 +8,7 @@
  * own small margin so the numbers look like a pro book.
  */
 
-import { inverseProb, starPlayersFor } from "./odds-model";
+import { inverseProb } from "./odds-model";
 
 export interface BaseOdds {
   h2h?: { home: number; draw: number; away: number };
@@ -244,29 +244,11 @@ export function deriveMarkets(
     { selectionKey: "btts_no", name: "Both teams to score — No", odds: price(1 - model.pBtts) },
   ];
 
-  // Anytime scorer: real lineups when available, otherwise deterministic stars
+  // Anytime scorer: REAL lineups only. Without lineups the market is hidden —
+  // fake names would never settle (settlement matches real goal events).
   const scorers: DerivedSelection[] = lineups?.length
     ? buildScorersFromLineups(lineups, lambdaH, lambdaA)
-    : (() => {
-        const scorerOdds = (teamLambda: number, index: number) =>
-          Math.min(0.55, Math.max(0.05, (0.35 + teamLambda) * 0.16 * (1.4 - index * 0.28)));
-        const out: DerivedSelection[] = [];
-        starPlayersFor(homeTeam).forEach((p, i) =>
-          out.push({
-            selectionKey: p.id,
-            name: p.name,
-            odds: price(scorerOdds(lambdaH, i), 1.1),
-          }),
-        );
-        starPlayersFor(awayTeam).forEach((p, i) =>
-          out.push({
-            selectionKey: p.id,
-            name: p.name,
-            odds: price(scorerOdds(lambdaA, i), 1.1),
-          }),
-        );
-        return out;
-      })();
+    : [];
 
   return { dc, handicap, exact, btts, scorers };
 }
