@@ -4,8 +4,8 @@ import { fetchJson, csvEnv, type AdapterResponse } from "./http";
 const BASE = "https://api.the-odds-api.com/v4";
 
 /**
- * Popular soccer competitions on The Odds API mapped to API-Football league ids.
- * Odds upsert matches by (home, away, kickoff ±3h) so a partial map still works.
+ * Popular soccer competitions on The Odds API. Top-6 keeps the free-tier
+ * quota sane: ~6 odds calls + ~6 scores calls per cycle across both keys.
  */
 export const SPORT_KEYS = [
   "soccer_epl",
@@ -14,13 +14,16 @@ export const SPORT_KEYS = [
   "soccer_germany_bundesliga",
   "soccer_france_ligue_one",
   "soccer_uefa_champs_league",
-  "soccer_uefa_europa_league",
-  "soccer_netherlands_eredivisie",
-  "soccer_portugal_primeira_liga",
-  "soccer_turkey_super_league",
-  "soccer_belgium_first_div",
-  "soccer_uefa_nations_league",
 ];
+
+export const SPORT_META: Record<string, { name: string; country: string }> = {
+  soccer_epl: { name: "Premier League", country: "England" },
+  soccer_spain_la_liga: { name: "La Liga", country: "Spain" },
+  soccer_italy_serie_a: { name: "Serie A", country: "Italy" },
+  soccer_germany_bundesliga: { name: "Bundesliga", country: "Germany" },
+  soccer_france_ligue_one: { name: "Ligue 1", country: "France" },
+  soccer_uefa_champs_league: { name: "Champions League", country: "Europe" },
+};
 
 export interface NormalizedOdds {
   homeTeam: string;
@@ -69,11 +72,12 @@ function averageBookmakerOdds(
 
 function mapEvent(raw: any): NormalizedOdds | null {
   const h2h = averageBookmakerOdds(raw.bookmakers ?? [], (outcomes) => {
+    // Soccer h2h outcomes are keyed by the TEAM NAMES + "Draw"
     const rec: Record<string, number> = {};
     for (const o of outcomes) {
-      if (o.name === "Home" || o.name === "Away" || o.name === "Draw") {
-        rec[o.name.toLowerCase()] = o.price;
-      }
+      if (o.name === raw.home_team) rec.home = o.price;
+      else if (o.name === raw.away_team) rec.away = o.price;
+      else if (o.name === "Draw") rec.draw = o.price;
     }
     return Object.keys(rec).length >= 3 ? rec : null;
   });
@@ -118,9 +122,9 @@ async function call(path: string): Promise<any[]> {
     } catch {
       throw lastError;
     }
-    const res: AdapterResponse = await fetchJson(`${BASE}${path}`, {
-      headers: { Authorization: `Bearer ${key}` },
-    });
+    // The Odds API v4 requires the key as a query parameter, not a header.
+    const sep = path.includes("?") ? "&" : "?";
+    const res: AdapterResponse = await fetchJson(`${BASE}${path}${sep}apiKey=${key}`);
 
     const remaining = Number(res.headers.get("x-requests-remaining"));
     if (!Number.isNaN(remaining)) {
@@ -149,7 +153,7 @@ export async function getOddsForSports(sportKeys = SPORT_KEYS): Promise<Normaliz
   for (const sport of sportKeys) {
     try {
       const raw = await call(
-        `/sports/${sport}/odds/?regions=eu&markets=h2h,totals,btts&oddsFormat=decimal`,
+        `/sports/${sport}/odds/?regions=eu&markets=h2h,totals&oddsFormat=decimal`,
       );
       for (const ev of raw) {
         const mapped = mapEvent(ev);
@@ -157,6 +161,49 @@ export async function getOddsForSports(sportKeys = SPORT_KEYS): Promise<Normaliz
       }
     } catch {
       // pool exhausted mid-loop: return what we have
+      break;
+    }
+  }
+  return out;
+}
+
+export interface NormalizedScore {
+  providerId: string; // raw event id
+  homeTeam: string;
+  awayTeam: string;
+  commenceTime: Date;
+  completed: boolean;
+  homeScore: number | null;
+  awayScore: number | null;
+  lastUpdate: Date | null;
+}
+
+/** Scores for matches within the last N days (settlement data). */
+export async function getScoresForSports(
+  daysFrom = 1,
+  sportKeys = SPORT_KEYS,
+): Promise<NormalizedScore[]> {
+  const out: NormalizedScore[] = [];
+  for (const sport of sportKeys) {
+    try {
+      const raw = await call(`/sports/${sport}/scores/?daysFrom=${daysFrom}`);
+      for (const ev of raw as any[]) {
+        const scores: Record<string, number> = {};
+        for (const s of ev.scores ?? []) {
+          scores[s.name] = Number(s.score ?? 0);
+        }
+        out.push({
+          providerId: String(ev.id),
+          homeTeam: ev.home_team ?? "",
+          awayTeam: ev.away_team ?? "",
+          commenceTime: new Date(ev.commence_time ?? Date.now()),
+          completed: Boolean(ev.completed),
+          homeScore: scores[ev.home_team] ?? null,
+          awayScore: scores[ev.away_team] ?? null,
+          lastUpdate: ev.last_update ? new Date(ev.last_update) : null,
+        });
+      }
+    } catch {
       break;
     }
   }

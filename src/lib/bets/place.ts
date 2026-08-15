@@ -108,8 +108,26 @@ async function resolveSelections(
     const market = await prisma.market.findUnique({
       where: { fixtureId_key: { fixtureId: fixture.id, key: sel.marketKey } },
     });
-    if (!market || market.status !== "OPEN")
+    if (!market || market.status !== "OPEN") {
+      // BTTS is derived when the provider doesn't expose it (The Odds API)
+      if (sel.marketKey === "btts") {
+        const base = await loadBaseOdds(fixture.id);
+        const derived = deriveMarkets(base, fixture.homeTeam, fixture.awayTeam);
+        const pick = derived.btts.find((s) => s.selectionKey === sel.selectionKey);
+        if (pick) {
+          out.push({
+            fixtureId: fixture.id,
+            marketKey: sel.marketKey,
+            selectionKey: sel.selectionKey,
+            selectionName: pick.name,
+            fixtureLabel: `${fixture.homeTeam} vs ${fixture.awayTeam}`,
+            odds: pick.odds,
+          });
+          continue;
+        }
+      }
       throw new PlacementError("Market unavailable for this match");
+    }
 
     const odds = await prisma.odds.findUnique({
       where: { marketId_selectionKey: { marketId: market.id, selectionKey: sel.selectionKey } },

@@ -11,7 +11,7 @@ export async function GET() {
         where: {
           kickoff: {
             gte: new Date(Date.now() - 3 * 3600 * 1000),
-            lte: new Date(Date.now() + 4 * 24 * 3600 * 1000),
+            lte: new Date(Date.now() + 10 * 24 * 3600 * 1000),
           },
         },
         select: { id: true },

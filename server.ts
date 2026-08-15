@@ -1,7 +1,7 @@
+import "dotenv/config";
 // IMPORTANT: this must be the FIRST import — ESM imports are hoisted, so the
 // polyfill only wins if it lives in a module imported before `next`.
 import "./scripts/als-polyfill.cjs";
-import "dotenv/config";
 
 import { createServer } from "http";
 import next from "next";
@@ -9,7 +9,7 @@ import { setupSocket } from "@/server/socket";
 import { startInterval } from "@/server/scheduler";
 import { refreshFixtures } from "@/server/scheduler/fixtures";
 import { refreshLiveScores } from "@/server/scheduler/scores";
-import { refreshPreMatchOdds, refreshInPlayOdds } from "@/server/scheduler/odds";
+import { refreshOddsFixturesAndScores } from "@/server/scheduler/odds";
 import { runSettlement } from "@/server/scheduler/settlement";
 import { prisma } from "@/lib/db";
 import * as apiFootball from "@/server/adapters/api-football";
@@ -36,14 +36,16 @@ async function main() {
   const io = setupSocket(httpServer);
 
   // Boot: initial refresh if configured, then steady-state intervals.
-  const anyApiConfigured = apiFootball.isConfigured() || oddsApi.isConfigured();
-  if (anyApiConfigured) {
+  if (apiFootball.isConfigured()) {
     const fixtureCount = await prisma.fixture.count();
     if (fixtureCount === 0) {
       console.log("[boot] no fixtures in db — running initial refresh");
       await refreshFixtures(io).catch(() => undefined);
-      await refreshPreMatchOdds(io).catch(() => undefined);
     }
+  }
+  if (oddsApi.isConfigured()) {
+    console.log("[boot] The Odds API keys found — fetching real fixtures + odds");
+    await refreshOddsFixturesAndScores(io).catch(() => undefined);
   }
 
   if (apiFootball.isConfigured()) {
@@ -51,8 +53,8 @@ async function main() {
     startInterval("scores", 60 * 1000, () => refreshLiveScores(io));
   }
   if (oddsApi.isConfigured()) {
-    startInterval("odds:prematch", 30 * 60 * 1000, () => refreshPreMatchOdds(io));
-    startInterval("odds:inplay", 90 * 1000, () => refreshInPlayOdds(io));
+    // Quota-budgeted: ~12 odds calls + ~6 scores calls per cycle, 2 keys.
+    startInterval("odds:real", 6 * 3600 * 1000, () => refreshOddsFixturesAndScores(io));
   }
   // Settlement always runs — it is local, no API needed.
   startInterval("settlement", 60 * 1000, () => runSettlement(io));

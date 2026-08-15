@@ -19,7 +19,7 @@ export async function GET(req: NextRequest) {
           : {
               kickoff: {
                 gte: new Date(now.getTime() - 3 * 3600 * 1000),
-                lte: new Date(now.getTime() + 4 * 24 * 3600 * 1000),
+                lte: new Date(now.getTime() + 10 * 24 * 3600 * 1000),
               },
             };
 

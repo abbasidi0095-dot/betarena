@@ -95,7 +95,7 @@ export default function FixturePage({ params }: { params: Promise<{ id: string }
           selectionKey: o.selectionKey,
           name: o.selectionKey === "btts_yes" ? "BTTS — Yes" : "BTTS — No",
           odds: o.value,
-        })) ?? [],
+        })) ?? derivedMarkets.btts,
     },
     {
       key: "dc",

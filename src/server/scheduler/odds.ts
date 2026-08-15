@@ -118,3 +118,94 @@ export async function refreshInPlayOdds(io?: Server): Promise<void> {
   });
   await upsertOddsForFixtures(events, fixtures, io);
 }
+
+/**
+ * Primary real-data path (no API-Football key needed): fetch The Odds API
+ * events, create/refresh real leagues + fixtures from them, and attach real
+ * pre-match odds. Quota-budgeted: 1 call per sport per cycle.
+ */
+export async function refreshOddsFixturesAndScores(io?: Server): Promise<void> {
+  if (!oddsApi.isConfigured()) return;
+  const now = Date.now();
+  const farFuture = new Date(now + 7 * 24 * 3600 * 1000);
+
+  for (const sportKey of oddsApi.SPORT_KEYS) {
+    let events: oddsApi.NormalizedOdds[];
+    try {
+      events = await oddsApi.getOddsForSports([sportKey]);
+    } catch {
+      continue;
+    }
+    if (events.length === 0) continue;
+
+    const meta = oddsApi.SPORT_META[sportKey] ?? { name: sportKey, country: "" };
+    const league = await prisma.league.upsert({
+      where: { providerId: `odds:${sportKey}` },
+      create: {
+        providerId: `odds:${sportKey}`,
+        name: meta.name,
+        country: meta.country,
+        season: new Date().getFullYear(),
+      },
+      update: { name: meta.name, country: meta.country },
+    });
+
+    // Create/refresh fixtures from events (skip stale ones, cap window)
+    const fixtureMap = new Map<string, { id: string; homeTeam: string; awayTeam: string; kickoff: Date }>();
+    for (const ev of events) {
+      const kick = ev.commenceTime.getTime();
+      if (kick > farFuture.getTime() || kick < now - 2 * 3600 * 1000) continue;
+      const providerId = `odds:${ev.homeTeam}|${ev.awayTeam}|${Math.round(kick / 60000)}`;
+      const fixture = await prisma.fixture.upsert({
+        where: { providerId },
+        create: {
+          providerId,
+          leagueId: league.id,
+          kickoff: ev.commenceTime,
+          status: "SCHEDULED",
+          homeTeam: ev.homeTeam,
+          awayTeam: ev.awayTeam,
+        },
+        update: { kickoff: ev.commenceTime },
+      });
+      fixtureMap.set(providerId, {
+        id: fixture.id,
+        homeTeam: ev.homeTeam,
+        awayTeam: ev.awayTeam,
+        kickoff: ev.commenceTime,
+      });
+    }
+
+    // Attach the real odds (match by exact teams + kickoff window)
+    await upsertOddsForFixtures(
+      events,
+      [...fixtureMap.values()],
+      io,
+    );
+  }
+
+  // Scores pass for settlement — only COMPLETED events carry final scores;
+  // the endpoint also lists upcoming matches, so never infer LIVE from it.
+  try {
+    const scores = await oddsApi.getScoresForSports(1);
+    for (const s of scores) {
+      if (!s.completed || s.homeScore === null || s.awayScore === null) continue;
+      const providerId = `odds:${s.homeTeam}|${s.awayTeam}|${Math.round(s.commenceTime.getTime() / 60000)}`;
+      const fixture = await prisma.fixture.findUnique({ where: { providerId } });
+      if (!fixture || fixture.status === "FINISHED") continue;
+      await prisma.fixture.update({
+        where: { id: fixture.id },
+        data: { status: "FINISHED", homeScore: s.homeScore, awayScore: s.awayScore, minute: 90 },
+      });
+      io?.to(`live:fixture:${fixture.id}`).emit("score:update", {
+        fixtureId: fixture.id,
+        homeScore: s.homeScore,
+        awayScore: s.awayScore,
+        minute: 90,
+        events: [],
+      });
+    }
+  } catch {
+    // scores are best-effort; odds+fixtures already landed
+  }
+}
