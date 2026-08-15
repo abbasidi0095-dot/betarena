@@ -2,6 +2,7 @@ import type { Server } from "socket.io";
 import { prisma } from "@/lib/db";
 import * as footballData from "@/server/adapters/football-data";
 import { normalizeTeam } from "@/server/scheduler/odds";
+import { leaguePriority } from "@/lib/leagues";
 
 /**
  * Full-week fixture sync via football-data.org (no free-tier date cap,
@@ -49,8 +50,13 @@ export async function refreshWeekFixtures(_io?: Server): Promise<void> {
         country: "",
         logo: f.competition.emblem,
         season: new Date().getFullYear(),
+        priority: leaguePriority(f.competition.providerId),
       },
-      update: { name: f.competition.name, logo: f.competition.emblem },
+      update: {
+        name: f.competition.name,
+        logo: f.competition.emblem,
+        priority: leaguePriority(f.competition.providerId),
+      },
     });
 
     await prisma.fixture.upsert({

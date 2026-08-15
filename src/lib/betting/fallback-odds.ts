@@ -2,7 +2,7 @@ import { generateRealisticOdds, teamsFromHash } from "./odds-model";
 
 export interface FallbackOdds {
   h2h: { home: number; draw: number; away: number };
-  totals: { over_2.5: number; under_2.5: number };
+  totals: { "over_2.5": number; "under_2.5": number };
   btts: { btts_yes: number; btts_no: number };
 }
 

@@ -53,3 +53,32 @@ describe("fallbackOdds — deterministic fixed odds", () => {
     expect(set.size).toBeGreaterThan(1);
   });
 });
+
+import { leaguePriority } from "@/lib/leagues";
+
+describe("leaguePriority — big leagues first", () => {
+  it("ranks the top-6 leagues and cups at priority 1", () => {
+    expect(leaguePriority("39")).toBe(1); // EPL (api-football)
+    expect(leaguePriority("140")).toBe(1); // La Liga
+    expect(leaguePriority("135")).toBe(1); // Serie A
+    expect(leaguePriority("78")).toBe(1); // Bundesliga
+    expect(leaguePriority("61")).toBe(1); // Ligue 1
+    expect(leaguePriority("2")).toBe(1); // Champions League
+    expect(leaguePriority("fd:2021")).toBe(1); // EPL (football-data)
+    expect(leaguePriority("fd:2001")).toBe(1); // UCL (football-data)
+  });
+
+  it("ranks second-tier competitions at priority 2", () => {
+    expect(leaguePriority("3")).toBe(2); // Europa League
+    expect(leaguePriority("88")).toBe(2); // Eredivisie
+    expect(leaguePriority("94")).toBe(2); // Primeira Liga
+    expect(leaguePriority("203")).toBe(2); // Süper Lig
+    expect(leaguePriority("144")).toBe(2); // Belgian First Division A
+  });
+
+  it("defaults everything else to 0", () => {
+    expect(leaguePriority("301")).toBe(0); // Brazilian Serie A
+    expect(leaguePriority("fd:2004")).toBe(0); // some small league
+    expect(leaguePriority("")).toBe(0);
+  });
+});

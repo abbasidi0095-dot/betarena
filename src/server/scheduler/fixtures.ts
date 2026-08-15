@@ -1,6 +1,7 @@
 import type { Server } from "socket.io";
 import { prisma } from "@/lib/db";
 import * as apiFootball from "@/server/adapters/api-football";
+import { leaguePriority } from "@/lib/leagues";
 
 /** Today's matches (live events + lineups source) — API-Football free tier
  * caps lookups at ~3 days anyway; the full week comes from football-data. */
@@ -18,8 +19,14 @@ export async function refreshFixtures(_io?: Server): Promise<void> {
           country: f.league.country,
           logo: f.league.logo,
           season: f.league.season,
+          priority: leaguePriority(f.league.providerId),
         },
-        update: { name: f.league.name, logo: f.league.logo, country: f.league.country },
+        update: {
+          name: f.league.name,
+          logo: f.league.logo,
+          country: f.league.country,
+          priority: leaguePriority(f.league.providerId),
+        },
       });
 
       const existing = await prisma.fixture.findUnique({
@@ -97,6 +104,7 @@ export async function refreshStandings(_io?: Server): Promise<void> {
             name: meta.name,
             country: meta.country,
             season,
+            priority: leaguePriority(sportKey),
             standings: standings as any,
           },
         });
