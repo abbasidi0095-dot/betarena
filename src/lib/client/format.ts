@@ -1,5 +1,11 @@
+/** Format a BetPoints amount as euros: €1,234. */
+export function formatEuro(n: number): string {
+  return `€${new Intl.NumberFormat("en-GB").format(n)}`;
+}
+
+/** Backwards-compatible alias. */
 export function formatPoints(n: number): string {
-  return new Intl.NumberFormat("en-GB").format(n);
+  return formatEuro(n);
 }
 
 export function oddsToString(value: number | string): string {

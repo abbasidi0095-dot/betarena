@@ -5,7 +5,7 @@ import { Gift, LifeBuoy } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { useUser } from "@/stores/user";
 import { api } from "@/lib/client/api";
-import { formatPoints } from "@/lib/client/format";
+import { formatEuro } from "@/lib/client/format";
 import { cn } from "@/lib/client/cn";
 
 export default function ProfilePage() {
@@ -64,7 +64,7 @@ export default function ProfilePage() {
             <p className="text-xs text-text-secondary">
               Balance{" "}
               <span className="font-bold tabular-nums text-win">
-                {formatPoints(user.pointBalance)} pts
+                {formatEuro(user.pointBalance)}
               </span>
             </p>
           </div>
@@ -91,7 +91,7 @@ export default function ProfilePage() {
             <div>
               <p className="text-sm font-bold">Daily bonus</p>
               <p className="text-[11px] text-text-secondary">
-                {user.canClaimDailyBonus ? "Claim your +100 points now" : "Already claimed — back in 24h"}
+                {user.canClaimDailyBonus ? "Claim your +€100 now" : "Already claimed — back in 24h"}
               </p>
             </div>
           </button>
@@ -114,7 +114,7 @@ export default function ProfilePage() {
               <p className="text-sm font-bold">Rescue top-up</p>
               <p className="text-[11px] text-text-secondary">
                 {user.canRescue
-                  ? "Balance at zero? Claim +500 points"
+                  ? "Balance at zero? Claim +€500"
                   : "Available when your balance hits zero"}
               </p>
             </div>

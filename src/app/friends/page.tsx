@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { UserPlus, Check, X } from "lucide-react";
 import { AppShell } from "@/components/layout/AppShell";
 import { api, type FriendsResponse } from "@/lib/client/api";
+import { formatEuro } from "@/lib/client/format";
 
 export default function FriendsPage() {
   const [data, setData] = useState<FriendsResponse | null>(null);
@@ -129,7 +130,7 @@ export default function FriendsPage() {
             >
               <span className="text-sm font-medium">{f.username}</span>
               <span className="text-xs tabular-nums text-win">
-                {f.totalWon.toLocaleString()} pts won
+                {formatEuro(f.totalWon)} won
               </span>
             </div>
           ))}

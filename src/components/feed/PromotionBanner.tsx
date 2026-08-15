@@ -14,7 +14,7 @@ export function PromotionBanner() {
           Free-to-play
         </p>
         <p className="mt-1 text-sm font-bold text-white">
-          1,000 BetPoints on the house. No real money — ever.
+          €1,000 on the house. No real money — ever.
         </p>
       </div>
       {user ? (
@@ -33,8 +33,8 @@ export function PromotionBanner() {
             </p>
             <p className="text-[11px] text-text-secondary">
               {(user.canClaimDailyBonus || user.canRescue)
-                ? "Claim +100 pts (or a rescue top-up) in your profile"
-                : "Come back tomorrow for +100 more points"}
+                ? "Claim +€100 (or a rescue top-up) in your profile"
+                : "Come back tomorrow for +€100 more"}
             </p>
           </div>
         </Link>
@@ -47,7 +47,7 @@ export function PromotionBanner() {
           <div>
             <p className="text-sm font-semibold">Join BetArena</p>
             <p className="text-[11px] text-text-secondary">
-              Register and get 1,000 points instantly
+              Register and get €1,000 instantly
             </p>
           </div>
         </Link>

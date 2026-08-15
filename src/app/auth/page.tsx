@@ -43,7 +43,7 @@ export default function AuthPage() {
           </span>
           <span className="text-2xl font-black italic">Arena</span>
           <p className="mt-2 text-xs text-text-secondary">
-            1,000 free BetPoints when you register. No real money, ever.
+            €1,000 in free play money when you register. No real money, ever.
           </p>
         </div>
 
@@ -99,13 +99,13 @@ export default function AuthPage() {
               disabled={busy}
               className="w-full rounded-xl bg-betclic-red py-3 text-sm font-bold text-white hover:bg-betclic-red-dark disabled:opacity-60"
             >
-              {busy ? "Please wait…" : mode === "register" ? "Create account & claim 1,000 pts" : "Log in"}
+              {busy ? "Please wait…" : mode === "register" ? "Create account & claim €1,000" : "Log in"}
             </button>
           </form>
         </div>
 
         <p className="mt-4 text-center text-[10px] leading-relaxed text-text-tertiary">
-          BetArena is a free-to-play game with virtual points only.
+          BetArena is a free-to-play game with virtual currency only.
           <br />
           It involves no real money, deposits, or withdrawals.
         </p>

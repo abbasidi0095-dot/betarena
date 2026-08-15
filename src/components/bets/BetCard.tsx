@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/client/cn";
 import type { BetRow } from "@/lib/client/api";
-import { formatPoints, oddsToString } from "@/lib/client/format";
+import { formatEuro, oddsToString } from "@/lib/client/format";
 
 const STATUS_STYLES: Record<string, string> = {
   OPEN: "bg-surface-3 text-white",
@@ -73,7 +73,7 @@ export function BetCard({ bet }: { bet: BetRow }) {
 
       <div className="flex items-center justify-between border-t border-surface-2 pt-3 text-xs">
         <span className="text-text-secondary">
-          Stake <span className="font-semibold text-white">{formatPoints(bet.stakeTotal)} pts</span>
+          Stake <span className="font-semibold text-white">{formatEuro(bet.stakeTotal)}</span>
         </span>
         {settled ? (
           <span className="text-text-secondary">
@@ -84,14 +84,14 @@ export function BetCard({ bet }: { bet: BetRow }) {
                 bet.payout > 0 ? "text-win" : "text-lose",
               )}
             >
-              {formatPoints(bet.payout)} pts
+              {formatEuro(bet.payout)}
             </span>
           </span>
         ) : (
           <span className="text-text-secondary">
             Potential{" "}
             <span className="font-bold tabular-nums text-win">
-              {formatPoints(Number(bet.potentialReturn))} pts
+              {formatEuro(Number(bet.potentialReturn))}
             </span>
           </span>
         )}

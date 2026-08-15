@@ -9,9 +9,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "BetArena — Free-to-Play Sports Betting with BetPoints",
+  title: "BetArena — Free-to-Play Sports Betting in Euros",
   description:
-    "A free-to-play, point-based sports betting experience. Virtual BetPoints only — no real money, ever.",
+    "A free-to-play, point-based sports betting experience. Virtual currency only — no real money, ever.",
 };
 
 export const viewport: Viewport = {

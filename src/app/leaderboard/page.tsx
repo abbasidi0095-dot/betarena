@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { api, type LeaderboardRow } from "@/lib/client/api";
 import { cn } from "@/lib/client/cn";
-import { formatPoints } from "@/lib/client/format";
+import { formatEuro } from "@/lib/client/format";
 
 const MEDALS = ["🥇", "🥈", "🥉"];
 
@@ -91,9 +91,9 @@ export default function LeaderboardPage() {
               </div>
               <div className="text-right">
                 <p className="text-sm font-bold tabular-nums text-win">
-                  {formatPoints(row.totalWon)}
+                  {formatEuro(row.totalWon)}
                 </p>
-                <p className="text-[10px] text-text-tertiary">pts won</p>
+                <p className="text-[10px] text-text-tertiary">€ won</p>
               </div>
             </li>
           ))}

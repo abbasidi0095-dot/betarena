@@ -7,7 +7,7 @@ import { Trash2, X, ChevronDown, AlertCircle, Check } from "lucide-react";
 import { useSlip, totalOdds, type Selection } from "@/stores/slip";
 import { useUser } from "@/stores/user";
 import { api } from "@/lib/client/api";
-import { oddsToString, formatPoints } from "@/lib/client/format";
+import { oddsToString, formatEuro } from "@/lib/client/format";
 import { comboCount, type SystemType } from "@/lib/betting/combos";
 import { playSelectSound } from "@/lib/client/sound";
 import { cn } from "@/lib/client/cn";
@@ -27,10 +27,19 @@ export function BetSlip() {
   const user = useUser((s) => s.user);
   const [mode, setMode] = useState<BetMode>("ACCA");
   const [systemType, setSystemType] = useState<SystemType>("PATENT");
-  const [stake, setStake] = useState(50);
+  // String state: typing "100" must never show "0100" (number inputs re-render
+  // a leading 0 after clearing). Digits only, leading zeros stripped.
+  const [stakeStr, setStakeStr] = useState("50");
+  const stake = parseInt(stakeStr || "0", 10);
+  const setStake = (v: number) => setStakeStr(String(v));
   const [placing, setPlacing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  const onStakeChange = (raw: string) => {
+    const digits = raw.replace(/\D/g, "").replace(/^0+(?=\d)/, "");
+    setStakeStr(digits);
+  };
 
   const n = selections.length;
   const availableModes: BetMode[] = n >= 2 ? ["SINGLE", "ACCA", "SYSTEM"] : ["SINGLE"];
@@ -211,15 +220,17 @@ export function BetSlip() {
             {n > 0 && user && (
               <div className="border-t border-surface-2 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
                 <div className="mb-3 flex items-center gap-2">
-                  <div className="flex flex-1 items-center rounded-lg bg-surface-2 px-3">
+                  <div className="flex flex-1 items-center gap-1 rounded-lg bg-surface-2 px-3">
+                    <span className="text-xs font-bold text-text-secondary">€</span>
                     <input
-                      type="number"
-                      min={1}
-                      value={stake}
-                      onChange={(e) => setStake(Math.max(0, Number(e.target.value)))}
-                      className="w-full bg-transparent py-2 text-sm font-semibold tabular-nums outline-none"
+                      type="text"
+                      inputMode="numeric"
+                      value={stakeStr}
+                      onChange={(e) => onStakeChange(e.target.value)}
+                      onFocus={(e) => e.target.select()}
+                      placeholder="0"
+                      className="w-full bg-transparent py-2 text-sm font-semibold tabular-nums outline-none placeholder:text-text-tertiary"
                     />
-                    <span className="text-[10px] font-bold text-text-secondary">PTS</span>
                   </div>
                   {QUICK_STAKES.map((q) => (
                     <button
@@ -227,31 +238,36 @@ export function BetSlip() {
                       onClick={() => setStake(q)}
                       className="rounded-lg bg-surface-2 px-2.5 py-2 text-[11px] font-semibold hover:bg-surface-3"
                     >
-                      +{q}
+                      +{q}€
                     </button>
                   ))}
+                  <button
+                    onClick={() => user && setStake(user.pointBalance)}
+                    className="rounded-lg bg-betclic-red/15 px-2.5 py-2 text-[11px] font-bold text-betclic-red hover:bg-betclic-red/25"
+                  >
+                    MAX
+                  </button>
                 </div>
 
                 <dl className="mb-3 space-y-1 text-xs">
                   {effectiveMode === "SINGLE" ? (
-                    <Row label={`${n} single bet${n > 1 ? "s" : ""} × ${stake} pts`} value={`${formatPoints(totalCost)} pts`} />
+                    <Row
+                      label={`${n} single bet${n > 1 ? "s" : ""} × €${stake}`}
+                      value={formatEuro(totalCost)}
+                    />
                   ) : effectiveMode === "ACCA" ? (
                     <Row label="Total odds" value={oddsToString(product)} />
                   ) : (
                     <>
                       <Row label="Combinations" value={String(combos)} />
-                      <Row label="Stake per combo" value={`${perCombo} pts`} />
-                      <Row label="Total stake" value={`${formatPoints(totalCost)} pts`} />
+                      <Row label="Stake per combo" value={formatEuro(perCombo)} />
+                      <Row label="Total stake" value={formatEuro(totalCost)} />
                     </>
                   )}
                   {effectiveMode !== "SYSTEM" && (
-                    <Row label="Total stake" value={`${formatPoints(totalCost)} pts`} />
+                    <Row label="Total stake" value={formatEuro(totalCost)} />
                   )}
-                  <Row
-                    label="Potential return"
-                    value={`${formatPoints(potential)} pts`}
-                    highlight
-                  />
+                  <Row label="Potential return" value={formatEuro(potential)} highlight />
                 </dl>
 
                 {insufficient && (
@@ -280,7 +296,7 @@ export function BetSlip() {
                       : "cursor-not-allowed bg-surface-2 text-text-tertiary",
                   )}
                 >
-                  {placing ? "Placing…" : `Place ${effectiveMode === "SINGLE" ? `${n} bet${n > 1 ? "s" : ""}` : "bet"} · ${formatPoints(totalCost)} pts`}
+                  {placing ? "Placing…" : `Place ${effectiveMode === "SINGLE" ? `${n} bet${n > 1 ? "s" : ""}` : "bet"} · ${formatEuro(totalCost)}`}
                 </button>
               </div>
             )}

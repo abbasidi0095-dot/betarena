@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import confetti from "canvas-confetti";
 import { useRealtime } from "@/hooks/useSocket";
 import { useUser } from "@/stores/user";
-import { formatPoints } from "@/lib/client/format";
+import { formatEuro } from "@/lib/client/format";
 import { playWinSound } from "@/lib/client/sound";
 
 const STATUS_TEXT: Record<string, string> = {
@@ -58,7 +58,7 @@ export function WinToast() {
             {isWin ? (
               <>
                 You {STATUS_TEXT[lastSettled.status] ?? "won"}{" "}
-                <span className="text-win">{formatPoints(lastSettled.payout)} pts!</span>
+                <span className="text-win">{formatEuro(lastSettled.payout)}!</span>
               </>
             ) : (
               <span className="text-text-secondary">

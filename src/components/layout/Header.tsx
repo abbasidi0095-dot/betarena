@@ -108,7 +108,7 @@ export function Header({ onOpenSidebar }: { onOpenSidebar: () => void }) {
                   value={user.pointBalance}
                   className="text-xs font-bold text-white"
                 />
-                <span className="hidden text-[10px] font-medium text-white/70 sm:inline">PTS</span>
+                <span className="hidden text-[10px] font-medium text-white/70 sm:inline">EUR</span>
                 {(user.canClaimDailyBonus || user.canRescue) && (
                   <Link href="/profile" aria-label="Claim bonus" className="hidden sm:block">
                     <Gift size={14} className="text-win" />
