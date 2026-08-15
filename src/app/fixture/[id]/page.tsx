@@ -11,6 +11,8 @@ import { ScoreBoard } from "@/components/tracker/ScoreBoard";
 import { EventFeed } from "@/components/tracker/EventFeed";
 import { PitchVisualizer } from "@/components/tracker/PitchVisualizer";
 import { TeamCrest } from "@/components/feed/TeamCrest";
+import { FixtureStats } from "@/components/fixture/FixtureStats";
+import { cn } from "@/lib/client/cn";
 import type { DerivedMarkets, DerivedSelection } from "@/lib/betting/derived-markets";
 
 interface FixtureDetail {
@@ -24,6 +26,7 @@ export default function FixturePage({ params }: { params: Promise<{ id: string }
   const [data, setData] = useState<FixtureDetail | null>(null);
   const [notFound, setNotFound] = useState(false);
   const [openPanel, setOpenPanel] = useState<string | null>("h2h");
+  const [activeTab, setActiveTab] = useState<"marches" | "stats" | "composition">("marches");
 
   useEffect(() => {
     let cancelled = false;
@@ -164,8 +167,37 @@ export default function FixturePage({ params }: { params: Promise<{ id: string }
 
         <ScoreBoard fixture={fixture} />
 
+        {/* Betclic sub-nav */}
+        <div className="no-scrollbar mt-4 flex gap-2 overflow-x-auto">
+          {([
+            { key: "marches", label: "Marchés" },
+            { key: "stats", label: "Statistiques" },
+            { key: "composition", label: "Composition" },
+          ] as const).map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setActiveTab(t.key)}
+              className={cn(
+                "shrink-0 rounded-full px-4 py-1.5 text-xs font-bold transition-colors",
+                activeTab === t.key
+                  ? "bg-betclic-gold text-black"
+                  : "border border-card-border bg-card-dark text-text-secondary hover:text-white",
+              )}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {activeTab === "stats" && (
+          <div className="mt-4">
+            <FixtureStats fixtureId={fixture.id} homeTeam={fixture.homeTeam} awayTeam={fixture.awayTeam} />
+          </div>
+        )}
+
       {/* team headers with crests */}
-      <div className="mt-4 flex items-center justify-between gap-3 rounded-xl bg-surface px-4 py-3">
+      {activeTab === "marches" && (
+      <div className="mt-4 flex items-center justify-between gap-3 rounded-xl border border-card-border bg-card-dark px-4 py-3">
         <div className="flex items-center gap-2.5">
           <TeamCrest name={fixture.homeTeam} size={30} />
           <span className="text-sm font-semibold">{fixture.homeTeam}</span>
@@ -175,7 +207,9 @@ export default function FixturePage({ params }: { params: Promise<{ id: string }
           <TeamCrest name={fixture.awayTeam} size={30} />
         </div>
       </div>
+      )}
 
+      {activeTab === "marches" && (
       <div className="mt-4 space-y-2">
         {visibleMarkets.map((m) => (
           <MarketPanel
@@ -189,9 +223,10 @@ export default function FixturePage({ params }: { params: Promise<{ id: string }
           />
         ))}
       </div>
+      )}
 
-      {fixture.lineups && fixture.lineups.length >= 2 && (
-        <div className="mt-6">
+      {activeTab === "composition" && fixture.lineups && fixture.lineups.length >= 2 && (
+        <div className="mt-4">
           <h2 className="mb-2 text-sm font-bold">Lineups</h2>
           <div className="grid gap-3 sm:grid-cols-2">
             {fixture.lineups.map((team) => (
@@ -236,6 +271,12 @@ export default function FixturePage({ params }: { params: Promise<{ id: string }
               </div>
             ))}
           </div>
+        </div>
+      )}
+
+      {activeTab === "composition" && (
+        <div className="mt-4 rounded-xl border border-card-border bg-card-dark p-6 text-center">
+          <p className="text-sm text-text-tertiary">Compositions available closer to kickoff.</p>
         </div>
       )}
 
