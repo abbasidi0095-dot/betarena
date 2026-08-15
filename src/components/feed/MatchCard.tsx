@@ -56,9 +56,9 @@ export function MatchCard({ fixture }: { fixture: FixtureRow }) {
         </div>
       </Link>
 
-      <div className="flex items-center gap-1.5">
+      <div className="flex flex-wrap items-center gap-1.5">
         {h2h && (
-          <div className="flex flex-1 gap-1.5">
+          <div className="flex min-w-[190px] flex-1 gap-1.5">
             {(["home", "draw", "away"] as const).map((key) => {
               const value = findOdds(h2h, key);
               if (!value) return <div key={key} className="min-w-[56px] flex-1" />;

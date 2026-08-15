@@ -48,8 +48,8 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
 
   return (
     <>
-      <aside className="sticky top-14 hidden h-[calc(100vh-3.5rem)] w-56 shrink-0 border-r border-surface-2 lg:block">
-        {content}
+      <aside className="hidden w-56 shrink-0 border-r border-surface-2 lg:block">
+        <div className="h-full overflow-y-auto overflow-x-hidden">{content}</div>
       </aside>
       <AnimatePresence>
         {open && (

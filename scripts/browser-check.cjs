@@ -26,6 +26,7 @@ const BASE = process.env.BASE ?? "http://localhost:3100";
   let fails = 0;
   for (const path of pages) {
     const page = await browser.newPage();
+    await page.setViewport({ width: 375, height: 720 }); // mobile-first check
     const errs = [];
     page.on("pageerror", (e) => errs.push(String(e)));
     await page.setCookie({
@@ -36,9 +37,24 @@ const BASE = process.env.BASE ?? "http://localhost:3100";
     });
     await page.goto(`${BASE}${path}`, { waitUntil: "networkidle0", timeout: 45000 });
     await new Promise((r) => setTimeout(r, 1200));
-    const body = await page.evaluate(() => document.body.innerText.slice(0, 60).replace(/\n/g, " | "));
-    console.log(`${path.padEnd(14)} errors:${errs.length ? errs.slice(0, 2) : "none"}  body:${body}`);
-    if (errs.length) fails++;
+    const metrics = await page.evaluate(() => ({
+      bodyScrollW: document.body.scrollWidth,
+      innerW: window.innerWidth,
+      docH: document.documentElement.scrollHeight,
+      innerH: window.innerHeight,
+      mainScrollable: (() => {
+        const main = document.querySelector("main");
+        if (!main) return false;
+        return main.scrollHeight > main.clientHeight;
+      })(),
+    }));
+    const body = await page.evaluate(() => document.body.innerText.slice(0, 40).replace(/\n/g, " | "));
+    const hOverflow = metrics.bodyScrollW > metrics.innerW;
+    console.log(
+      `${path.padEnd(14)} errors:${errs.length ? errs.slice(0, 2) : "none"} ` +
+        `noHScroll:${!hOverflow} mainScroll:${metrics.mainScrollable} body:${body}`,
+    );
+    if (errs.length || hOverflow) fails++;
     await page.close();
   }
   await browser.close();
