@@ -7,7 +7,7 @@ import { createServer } from "http";
 import next from "next";
 import { setupSocket } from "@/server/socket";
 import { startInterval } from "@/server/scheduler";
-import { refreshFixtures, refreshStandings, refreshLineups, syncLeaguePriorities, backfillTeamIds, purgeNonProfessionalLeagues } from "@/server/scheduler/fixtures";
+import { refreshFixtures, refreshLineups, syncLeaguePriorities, backfillTeamIds, purgeNonProfessionalLeagues } from "@/server/scheduler/fixtures";
 import { refreshLiveMinutes, refreshLiveScores, driftLiveMinutes } from "@/server/scheduler/scores";
 import { refreshRealOdds, backfillFallbackOdds, refreshLiveFallbackOdds } from "@/server/scheduler/odds";
 import { refreshWeekFixtures } from "@/server/scheduler/week";
@@ -41,7 +41,9 @@ async function main() {
   if (apiFootball.isConfigured()) {
     console.log("[boot] API-Football key found — fetching today's fixtures");
     await refreshFixtures(io).catch(() => undefined);
-    void refreshStandings(io).catch(() => undefined);
+    // Standings are skipped: free-tier keys cannot access the current
+    // season's standings ("try from 2022 to 2024"), so the 11-league loop
+    // would only burn ~11 requests against the 100/day budget.
     void refreshLineups(io).catch(() => undefined);
   }
   if (footballData.isConfigured()) {
@@ -76,11 +78,11 @@ async function main() {
 
   if (apiFootball.isConfigured()) {
     startInterval("fixtures", 12 * 3600 * 1000, () => refreshFixtures(io));
-    startInterval("standings", 24 * 3600 * 1000, () => refreshStandings(io));
     startInterval("lineups", 15 * 60 * 1000, () => refreshLineups(io));
-    // Live scores from API-Football. The key pool fails fast (1h cooldown)
-    // once the daily quota is gone, so this is a free best-effort poll.
-    startInterval("scores:live", 5 * 60 * 1000, () => refreshLiveScores(io));
+    // Live scores from API-Football, throttled hard — the 100/day budget
+    // must last the whole day alongside lineups (~50) + fixture syncs.
+    // football-data's per-minute poll is the primary live source anyway.
+    startInterval("scores:live", 30 * 60 * 1000, () => refreshLiveScores(io));
   }
   if (footballData.isConfigured()) {
     // 1 poll/min rotating 4 free keys — true minute-by-minute live updates

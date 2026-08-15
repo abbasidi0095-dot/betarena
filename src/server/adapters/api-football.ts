@@ -139,12 +139,15 @@ function mapFixture(raw: any): NormalizedFixture {
 }
 
 async function call(path: string): Promise<unknown[]> {
-  // Single free key: serialize every request so concurrent schedulers
-  // (standings + lineups + backfill at boot) can't race each other into
-  // rate-limit 429s and poison the key for an hour.
+  // Free tier allows ~10 requests/min per key and suspends accounts that
+  // burst past it. Serialize every call AND enforce a minimum interval so
+  // concurrent schedulers (standings + lineups + backfill at boot) can
+  // never race each other into a 429 + suspension.
   return withMutex(async () => {
+    await throttle();
     const p = getPool();
     const lastError = new AllKeysExhaustedError("api-football");
+    let softFailure = false;
     // Try up to pool-size attempts so each key gets one shot per call.
     for (let attempt = 0; attempt < Math.max(p.size, 1); attempt++) {
       let key: string;
@@ -162,32 +165,42 @@ async function call(path: string): Promise<unknown[]> {
         continue;
       }
       if (res.status === 429) {
-        // Distinguish the per-minute rate limit from the daily quota using
-        // paging: current >= total means the day's budget is gone.
-        const body = res.json as any;
-        const current = body?.paging?.current ?? 0;
-        const total = body?.paging?.total ?? 0;
-        const daily = total > 0 && current >= total;
-        p.reportFailure(key, "quota", daily ? undefined : 60_000);
+        // Rate limited — recover quickly and retry later rather than
+        // hammering (repeated 429s look abusive and get keys suspended).
+        p.reportFailure(key, "quota", 60_000);
         continue;
       }
       const body = res.json as any;
-      if (!body || body.errors?.token || Array.isArray(body.errors)) {
-        // api-sports returns 200 with an errors object for key problems
-        const errs = body?.errors;
-        if (errs?.token) {
-          p.reportFailure(key, "auth");
-          continue;
-        }
+      if (body?.errors?.token) {
+        p.reportFailure(key, "auth");
+        continue;
+      }
+      // Soft errors (plan restrictions, suspended accounts) return HTTP 200
+      // with an errors object and no response — rotate to the next key.
+      if (body?.errors && !Array.isArray(body?.response)) {
+        softFailure = true;
+        continue;
       }
       if (Array.isArray(body?.response)) return body.response as unknown[];
       return [];
     }
+    // Every key was unavailable. If at least one answered with a soft error
+    // the failure is temporary — degrade to empty rather than throwing.
+    if (softFailure) return [];
     throw lastError;
   });
 }
 
 let mutexChain: Promise<unknown> = Promise.resolve();
+let lastCallAt = 0;
+
+const MIN_CALL_INTERVAL_MS = 7_000; // ~8.5 req/min, safely under the 10/min limit
+
+async function throttle(): Promise<void> {
+  const wait = lastCallAt + MIN_CALL_INTERVAL_MS - Date.now();
+  if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+  lastCallAt = Date.now();
+}
 
 function withMutex<T>(fn: () => Promise<T>): Promise<T> {
   const run = mutexChain.then(fn, fn);
