@@ -22,10 +22,16 @@ export async function POST(req: NextRequest) {
   const res = NextResponse.json({
     user: { id: user.id, username: user.username, pointBalance: user.pointBalance },
   });
+  // Secure only over real HTTPS. NODE_ENV=production is not enough: the
+  // dev/prod server runs on plain HTTP, and browsers drop Secure cookies
+  // received over HTTP — which logged users out on every refresh.
+  const secure =
+    req.nextUrl.protocol === "https:" ||
+    req.headers.get("x-forwarded-proto") === "https";
   res.cookies.set(COOKIE_NAME, token, {
     httpOnly: true,
     sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
+    secure,
     maxAge: 60 * 60 * 24 * 30,
     path: "/",
   });
