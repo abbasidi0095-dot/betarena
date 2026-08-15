@@ -18,11 +18,11 @@ export function parseCookies(header: string | undefined): Record<string, string>
   return out;
 }
 
-const globalForIO = globalThis as unknown as { __betarenaIO?: Server };
+const globalForIO = globalThis as unknown as { __abbetIO?: Server };
 
 /** Get the socket.io server (same process — custom server). */
 export function getIO(): Server | null {
-  return globalForIO.__betarenaIO ?? null;
+  return globalForIO.__abbetIO ?? null;
 }
 
 export function setupSocket(httpServer: HttpServer): Server {
@@ -30,7 +30,7 @@ export function setupSocket(httpServer: HttpServer): Server {
     path: "/socket.io",
     cors: { origin: true, credentials: true },
   });
-  globalForIO.__betarenaIO = io;
+  globalForIO.__abbetIO = io;
 
   io.on("connection", (rawSocket) => {
     const socket = rawSocket as AppSocket;

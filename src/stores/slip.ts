@@ -106,7 +106,7 @@ export const useSlip = create<SlipState>()(
         }),
     }),
     {
-      name: "betarena-slip",
+      name: "abbet-slip",
       partialize: (state) => ({ selections: state.selections }),
     },
   ),

@@ -1,4 +1,4 @@
-# BetArena — Session Resume Notes
+# Abbet — Session Resume Notes
 
 Last updated: 2026-08-15 (session by opencode AI assistant)
 
@@ -8,7 +8,7 @@ Last updated: 2026-08-15 (session by opencode AI assistant)
 - Running app: http://localhost:3100 (supervised by `scripts/supervise.sh`; log `/tmp/opencode/betarena.log`)
 - Tunnel: ephemeral `cloudflared` quick tunnel, log `/tmp/opencode/tunnel.log` — URL from `grep -oE "https://[a-z0-9-]+\.trycloudflare\.com" /tmp/opencode/tunnel.log`
 - Dev DB: Postgres `postgresql://postgres:postgres@localhost:5433/betarena` (Postgres 18 on port 5433, local)
-- Port 3000 is owned by the user's PM2 app `jobseek-web` — **do not kill PM2**; BetArena runs on 3100.
+- Port 3000 is owned by the user's PM2 app `jobseek-web` — **do not kill PM2**; Abbet runs on 3100.
 
 ## State
 

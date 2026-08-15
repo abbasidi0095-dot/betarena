@@ -47,7 +47,7 @@ export default function CommunityPage() {
               className={cn(
                 "flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold transition-colors",
                 tab === "feed"
-                  ? "bg-betclic-gold text-black"
+                  ? "bg-brand text-black"
                   : "border border-card-border bg-card-dark text-text-secondary hover:text-white",
               )}
             >
@@ -59,7 +59,7 @@ export default function CommunityPage() {
               className={cn(
                 "flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold transition-colors",
                 tab === "top"
-                  ? "bg-betclic-gold text-black"
+                  ? "bg-brand text-black"
                   : "border border-card-border bg-card-dark text-text-secondary hover:text-white",
               )}
             >
@@ -75,7 +75,7 @@ export default function CommunityPage() {
                   onClick={() => setPeriod(p)}
                   className={cn(
                     "rounded-full px-2.5 py-1 text-[10px] font-bold uppercase transition-colors",
-                    period === p ? "bg-betclic-gold text-black" : "text-text-tertiary hover:text-white",
+                    period === p ? "bg-brand text-black" : "text-text-tertiary hover:text-white",
                   )}
                 >
                   {p === "today" ? "Aujourd'hui" : "Cette semaine"}
@@ -101,7 +101,7 @@ export default function CommunityPage() {
                 <div className="flex min-w-0 items-center gap-3">
                   <span className={cn(
                     "flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-black",
-                    i === 0 ? "bg-betclic-gold text-black" : "bg-surface-3 text-text-secondary",
+                    i === 0 ? "bg-brand text-black" : "bg-surface-3 text-text-secondary",
                   )}>
                     {i + 1}
                   </span>
@@ -119,7 +119,7 @@ export default function CommunityPage() {
                     </p>
                   </div>
                 </div>
-                <span className="shrink-0 text-lg font-black tabular-nums text-betclic-gold">{t.winRate}%</span>
+                <span className="shrink-0 text-lg font-black tabular-nums text-brand">{t.winRate}%</span>
               </div>
             ))}
           </div>

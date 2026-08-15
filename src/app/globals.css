@@ -1,10 +1,9 @@
 @import "tailwindcss";
 
 @theme {
-  --color-betclic-red: #e50813;
-  --color-betclic-red-dark: #b4060f;
-  --color-betclic-gold: #ffc700;
-  --color-betclic-gold-hover: #e5b300;
+  --color-brand: #ffc700;
+  --color-brand-hover: #e5b300;
+  --color-brand-soft: #fff3c4;
   --color-card-dark: #181a20;
   --color-card-border: #262a34;
   --color-bg: #121212;

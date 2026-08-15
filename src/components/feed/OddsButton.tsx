@@ -66,8 +66,8 @@ export function OddsButton({
         "relative flex min-w-0 w-full flex-col items-center justify-center overflow-hidden rounded-xl py-2 transition-colors duration-150",
         compact ? "text-[12px]" : "text-sm",
         active
-          ? "bg-card-dark text-betclic-gold ring-2 ring-betclic-gold"
-          : "bg-betclic-gold text-black hover:bg-betclic-gold-hover active:bg-betclic-gold-hover",
+          ? "bg-card-dark text-brand ring-2 ring-brand"
+          : "bg-brand text-black hover:bg-brand-hover active:bg-brand-hover",
         disabled && "cursor-not-allowed opacity-40",
       )}
     >
@@ -93,7 +93,7 @@ export function OddsButton({
         <span
           className={cn(
             "absolute bottom-0 left-0 h-[3px] rounded-full transition-all duration-300",
-            active ? "bg-betclic-gold" : "bg-black/50",
+            active ? "bg-brand" : "bg-black/50",
           )}
           style={{ width: `${prob * 100}%` }}
         />

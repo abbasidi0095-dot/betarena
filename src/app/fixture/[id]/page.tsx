@@ -160,7 +160,7 @@ export default function FixturePage({ params }: { params: Promise<{ id: string }
           </p>
           <button
             onClick={() => setOpenPanel(openPanel === "all" ? null : "all")}
-            className="shrink-0 text-[11px] font-semibold text-betclic-red"
+            className="shrink-0 text-[11px] font-semibold text-brand"
           >
             {openPanel === "all" ? "Collapse" : "All markets"}
           </button>
@@ -182,7 +182,7 @@ export default function FixturePage({ params }: { params: Promise<{ id: string }
               className={cn(
                 "shrink-0 rounded-full px-4 py-1.5 text-xs font-bold transition-colors",
                 activeTab === t.key
-                  ? "bg-betclic-gold text-black"
+                  ? "bg-brand text-black"
                   : "border border-card-border bg-card-dark text-text-secondary hover:text-white",
               )}
             >
@@ -331,7 +331,7 @@ function MarketPanel({
         onClick={onToggle}
         className="flex w-full items-center gap-2 px-3.5 py-3 text-left"
       >
-        <span className="text-betclic-gold">{market.icon}</span>
+        <span className="text-brand">{market.icon}</span>
         <span className="flex-1 text-xs font-bold uppercase tracking-wider">
           {market.title}
         </span>

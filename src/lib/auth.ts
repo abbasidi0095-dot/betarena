@@ -2,7 +2,7 @@ import { SignJWT, jwtVerify } from "jose";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
 
-export const COOKIE_NAME = "betarena_token";
+export const COOKIE_NAME = "abbet_token";
 const THIRTY_DAYS = "30d";
 
 function secret(): Uint8Array {

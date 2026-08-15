@@ -51,11 +51,11 @@ export function Header({ onOpenSidebar }: { onOpenSidebar: () => void }) {
   };
 
   return (
-    <header className="z-40 border-b border-black/30 bg-betclic-red">
+    <header className="z-40 border-b border-black/30 bg-brand">
       <div className="mx-auto flex h-13 max-w-[1400px] items-center gap-3 px-3 py-2 lg:px-6">
         <button
           onClick={onOpenSidebar}
-          className="rounded-lg p-2 text-white/85 hover:bg-black/15 lg:hidden"
+          className="rounded-lg p-2 text-black/75 hover:bg-black/10 lg:hidden"
           aria-label="Open leagues"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -64,17 +64,17 @@ export function Header({ onOpenSidebar }: { onOpenSidebar: () => void }) {
         </button>
 
         <Link href="/" className="flex items-center gap-1.5">
-          <span className="rounded-md bg-white px-2 py-0.5 text-lg font-black italic tracking-tight text-betclic-red">
-            Bet
+          <span className="rounded-md bg-black px-2 py-0.5 text-lg font-black italic tracking-tight text-brand">
+            ab
           </span>
-          <span className="hidden text-lg font-black italic tracking-tight text-white sm:inline">
-            Arena
+          <span className="hidden text-lg font-black italic tracking-tight text-black sm:inline">
+            bet
           </span>
         </Link>
 
         <button
           onClick={() => setSearchOpen(true)}
-          className="ml-1 flex min-w-0 flex-1 items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-left text-xs text-white/80 backdrop-blur transition-colors hover:bg-white/25 lg:ml-4 lg:max-w-md"
+          className="ml-1 flex min-w-0 flex-1 items-center gap-2 rounded-full bg-black/10 px-3 py-1.5 text-left text-xs text-black/75 backdrop-blur transition-colors hover:bg-black/20 lg:ml-4 lg:max-w-md"
         >
           <Search size={14} className="shrink-0" />
           <span className="truncate">Search matches, leagues…</span>
@@ -83,7 +83,7 @@ export function Header({ onOpenSidebar }: { onOpenSidebar: () => void }) {
         <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
           <button
             onClick={toggleSound}
-            className="hidden rounded-lg p-2 text-white/85 hover:bg-black/15 sm:block"
+            className="hidden rounded-lg p-2 text-black/75 hover:bg-black/10 sm:block"
             aria-label={soundEnabled ? "Mute sounds" : "Enable sounds"}
           >
             {soundEnabled ? <Volume2 size={16} /> : <VolumeX size={16} />}
@@ -93,7 +93,7 @@ export function Header({ onOpenSidebar }: { onOpenSidebar: () => void }) {
             <>
               <Link
                 href="/community"
-                className="hidden rounded-lg p-2 text-white/85 hover:bg-black/15 sm:block"
+                className="hidden rounded-lg p-2 text-black/75 hover:bg-black/10 sm:block"
                 aria-label="Community"
               >
                 <Users size={16} />
@@ -101,23 +101,23 @@ export function Header({ onOpenSidebar }: { onOpenSidebar: () => void }) {
 
               <Link
                 href="/my-bets"
-                className="relative hidden rounded-lg p-2 text-white/85 hover:bg-black/15 sm:block"
+                className="relative hidden rounded-lg p-2 text-black/75 hover:bg-black/10 sm:block"
                 aria-label="My bets"
               >
                 <Trophy size={16} />
                 {slipCount > 0 && (
-                  <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-bg text-[10px] font-bold text-betclic-red">
+                  <span className="absolute -right-0.5 -top-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-bg text-[10px] font-bold text-brand">
                     {slipCount}
                   </span>
                 )}
               </Link>
 
-              <div className="flex items-center gap-1 rounded-full bg-white/15 px-2 py-1.5 backdrop-blur sm:gap-1.5 sm:px-3">
+              <div className="flex items-center gap-1 rounded-full bg-black/10 px-2 py-1.5 backdrop-blur sm:gap-1.5 sm:px-3">
                 <NumberTicker
                   value={user.pointBalance}
-                  className="text-xs font-bold text-white"
+                  className="text-xs font-bold text-black"
                 />
-                <span className="hidden text-[10px] font-medium text-white/70 sm:inline">EUR</span>
+                <span className="hidden text-[10px] font-medium text-black/60 sm:inline">EUR</span>
                 {(user.canClaimDailyBonus || user.canRescue) && (
                   <Link href="/profile" aria-label="Claim bonus" className="hidden sm:block">
                     <Gift size={14} className="text-win" />
@@ -128,7 +128,7 @@ export function Header({ onOpenSidebar }: { onOpenSidebar: () => void }) {
               <div className="relative" ref={menuRef}>
                 <button
                   onClick={() => setMenuOpen((v) => !v)}
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-sm font-bold uppercase text-betclic-red"
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-white text-sm font-bold uppercase text-black"
                   aria-label="Profile menu"
                 >
                   {user.username.slice(0, 2)}
@@ -169,7 +169,7 @@ export function Header({ onOpenSidebar }: { onOpenSidebar: () => void }) {
           ) : (
             <Link
               href="/auth"
-              className="rounded-full bg-white px-4 py-1.5 text-xs font-bold text-betclic-red hover:bg-white/90"
+              className="rounded-full bg-black px-4 py-1.5 text-xs font-bold text-brand hover:bg-black/80"
             >
               Log in
             </Link>

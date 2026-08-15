@@ -36,7 +36,7 @@ export default function LeaderboardPage() {
               className={cn(
                 "rounded-full px-3.5 py-1.5 text-xs font-semibold capitalize",
                 scope === s
-                  ? "bg-betclic-red text-white"
+                  ? "bg-brand text-black"
                   : "bg-surface-2 text-text-secondary hover:text-white",
               )}
             >

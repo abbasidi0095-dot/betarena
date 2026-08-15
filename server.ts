@@ -97,7 +97,7 @@ async function main() {
   void runSettlement(io).catch(() => undefined);
 
   httpServer.listen(port, () => {
-    console.log(`> BetArena ready on http://${hostname}:${port} (dev=${dev})`);
+    console.log(`> Abbet ready on http://${hostname}:${port} (dev=${dev})`);
   });
 }
 

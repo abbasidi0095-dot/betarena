@@ -45,7 +45,7 @@ export function Feed({
                 <motion.span
                   layoutId="feed-tab"
                   transition={{ type: "spring", stiffness: 500, damping: 34 }}
-                  className="absolute inset-0 rounded-lg bg-betclic-red shadow-[0_2px_10px_rgba(229,8,19,0.35)]"
+                  className="absolute inset-0 rounded-lg bg-brand shadow-[0_2px_10px_rgba(255,199,0,0.4)]"
                 />
               )}
               <span className="relative z-10 flex items-center justify-center gap-1.5">

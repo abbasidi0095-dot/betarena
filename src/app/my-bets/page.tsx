@@ -29,7 +29,7 @@ export default function MyBetsPage() {
               className={cn(
                 "rounded-full px-3.5 py-1.5 text-xs font-semibold capitalize",
                 tab === t
-                  ? "bg-betclic-red text-white"
+                  ? "bg-brand text-black"
                   : "bg-surface-2 text-text-secondary hover:text-white",
               )}
             >

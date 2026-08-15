@@ -35,7 +35,7 @@ function blip(freq: number, duration = 0.08, type: OscillatorType = "sine") {
 
 function soundEnabled(): boolean {
   if (typeof window === "undefined") return false;
-  return window.localStorage.getItem("betarena-sound") === "1";
+  return window.localStorage.getItem("abbet-sound") === "1";
 }
 
 export function playSelectSound(wasActive: boolean) {

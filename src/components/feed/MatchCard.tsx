@@ -23,15 +23,15 @@ export function MatchCard({ fixture, index = 0 }: { fixture: FixtureRow; index?:
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: Math.min(index * 0.05, 0.4), ease: [0.16, 1, 0.3, 1] }}
       whileHover={{ y: -2 }}
-      className="group overflow-hidden rounded-xl border border-card-border bg-card-dark transition-colors hover:border-betclic-gold/40"
+      className="group overflow-hidden rounded-xl border border-card-border bg-card-dark transition-colors hover:border-brand/40"
     >
       {/* league strip */}
       <div className="flex items-center justify-between gap-2 border-b border-card-border px-3 py-1.5">
         <Link
           href={`/league/${fixture.league.id}`}
-          className="flex min-w-0 items-center gap-1.5 truncate text-[10px] font-semibold uppercase tracking-wider text-text-secondary transition-colors hover:text-betclic-gold"
+          className="flex min-w-0 items-center gap-1.5 truncate text-[10px] font-semibold uppercase tracking-wider text-text-secondary transition-colors hover:text-brand"
         >
-          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-betclic-gold" />
+          <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-brand" />
           <span className="truncate">
             {fixture.league.country} · {fixture.league.name}
           </span>
@@ -39,7 +39,7 @@ export function MatchCard({ fixture, index = 0 }: { fixture: FixtureRow; index?:
         {live ? (
           <LivePill minute={fixture.minute} />
         ) : (
-          <span className="shrink-0 text-[10px] font-semibold tabular-nums text-betclic-gold">
+          <span className="shrink-0 text-[10px] font-semibold tabular-nums text-brand">
             {formatKickoff(fixture.kickoff)}
           </span>
         )}
@@ -59,7 +59,7 @@ export function MatchCard({ fixture, index = 0 }: { fixture: FixtureRow; index?:
               className="rounded-lg border border-card-border bg-bg px-2 py-1"
             />
           ) : (
-            <span className="rounded-lg border border-card-border bg-bg px-2 py-1 text-[11px] font-bold tabular-nums text-betclic-gold">
+            <span className="rounded-lg border border-card-border bg-bg px-2 py-1 text-[11px] font-bold tabular-nums text-brand">
               vs
             </span>
           )}

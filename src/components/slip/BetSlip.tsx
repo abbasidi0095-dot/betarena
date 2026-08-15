@@ -124,7 +124,7 @@ export function BetSlip() {
           >
             <div className="flex items-center justify-between border-b border-surface-2 px-4 py-3">
               <div className="flex items-center gap-2">
-                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-betclic-red text-xs font-bold">
+                <span className="flex h-6 w-6 items-center justify-center rounded-full bg-brand text-black text-xs font-bold">
                   {n}
                 </span>
                 <h2 className="font-bold">Bet Slip</h2>
@@ -156,7 +156,7 @@ export function BetSlip() {
                     className={cn(
                       "flex-1 py-2.5 text-xs font-semibold uppercase tracking-wide transition-colors",
                       effectiveMode === m
-                        ? "border-b-2 border-betclic-red text-white"
+                        ? "border-b-2 border-brand text-white"
                         : "text-text-secondary hover:text-white",
                       !enabled && "cursor-not-allowed opacity-35",
                     )}
@@ -178,7 +178,7 @@ export function BetSlip() {
                       className={cn(
                         "shrink-0 rounded-full px-3 py-1 text-[11px] font-semibold",
                         systemType === s.key
-                          ? "bg-betclic-red text-white"
+                          ? "bg-brand text-black"
                           : ok
                             ? "bg-surface-2 hover:bg-surface-3"
                             : "bg-surface-2 opacity-40",
@@ -210,7 +210,7 @@ export function BetSlip() {
               {!user && n > 0 && (
                 <Link
                   href="/auth"
-                  className="mt-3 block rounded-lg bg-surface-2 p-3 text-center text-xs font-semibold text-betclic-red"
+                  className="mt-3 block rounded-lg bg-surface-2 p-3 text-center text-xs font-semibold text-brand"
                 >
                   Log in to place bets
                 </Link>
@@ -243,7 +243,7 @@ export function BetSlip() {
                   ))}
                   <button
                     onClick={() => user && setStake(user.pointBalance)}
-                    className="rounded-lg bg-betclic-red/15 px-2.5 py-2 text-[11px] font-bold text-betclic-red hover:bg-betclic-red/25"
+                    className="rounded-lg bg-brand/15 px-2.5 py-2 text-[11px] font-bold text-brand hover:bg-brand/25"
                   >
                     MAX
                   </button>
@@ -292,7 +292,7 @@ export function BetSlip() {
                   className={cn(
                     "w-full rounded-xl py-3 text-sm font-bold transition-all active:scale-[0.99]",
                     canPlace && !placing
-                      ? "bg-betclic-red text-white hover:bg-betclic-red-dark"
+                      ? "bg-brand text-black hover:bg-brand-hover"
                       : "cursor-not-allowed bg-surface-2 text-text-tertiary",
                   )}
                 >
@@ -343,7 +343,7 @@ function SlipRow({
           <button
             onClick={() => onRemove(sel.fixtureId, sel.marketKey, sel.selectionKey)}
             aria-label="Remove selection"
-            className="text-text-tertiary hover:text-lose"
+            className="text-text-tertiary hover:text-brand"
           >
             <X size={14} />
           </button>

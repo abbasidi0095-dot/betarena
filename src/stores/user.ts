@@ -30,13 +30,13 @@ export const useUser = create<UserState>()((set, get) => ({
   toggleSound: () => {
     const next = !get().soundEnabled;
     if (typeof window !== "undefined") {
-      window.localStorage.setItem("betarena-sound", next ? "1" : "0");
+      window.localStorage.setItem("abbet-sound", next ? "1" : "0");
     }
     set({ soundEnabled: next });
   },
   initSound: () => {
     if (typeof window !== "undefined") {
-      const stored = window.localStorage.getItem("betarena-sound");
+      const stored = window.localStorage.getItem("abbet-sound");
       set({ soundEnabled: stored === "1" });
     }
   },

@@ -9,13 +9,13 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "BetArena — Free-to-Play Sports Betting in Euros",
+  title: "Abbet — Free-to-Play Sports Betting in Euros",
   description:
     "A free-to-play, point-based sports betting experience. Virtual currency only — no real money, ever.",
 };
 
 export const viewport: Viewport = {
-  themeColor: "#121212",
+  themeColor: "#ffc700",
   width: "device-width",
   initialScale: 1,
 };

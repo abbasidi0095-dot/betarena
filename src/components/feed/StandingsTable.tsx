@@ -54,7 +54,7 @@ export function StandingsTable({ leagueId }: { leagueId: string }) {
       className="mb-5 overflow-hidden rounded-xl bg-surface"
     >
       <div className="flex items-center gap-1.5 border-b border-surface-2 px-3.5 py-2.5">
-        <Trophy size={13} className="text-betclic-red" />
+        <Trophy size={13} className="text-brand" />
         <span className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">
           Standings
         </span>
@@ -78,7 +78,7 @@ export function StandingsTable({ leagueId }: { leagueId: string }) {
               key={r.rank}
               className={cn(
                 "border-b border-surface-2/50 transition-colors last:border-0 hover:bg-surface-2/40",
-                i < 4 && "bg-betclic-red/[0.04]",
+                i < 4 && "bg-brand/[0.04]",
               )}
             >
               <td className="px-2 py-2 text-left font-semibold tabular-nums text-text-secondary">

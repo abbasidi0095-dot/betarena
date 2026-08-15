@@ -59,7 +59,7 @@ export function FixtureStats({ fixtureId, homeTeam, awayTeam }: { fixtureId: str
     <div className="space-y-3">
       {/* Form guide */}
       <div className="rounded-xl border border-card-border bg-card-dark p-4">
-        <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-betclic-gold">
+        <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-brand">
           Forme des équipes
         </h3>
         <div className="space-y-2.5">
@@ -76,7 +76,7 @@ export function FixtureStats({ fixtureId, homeTeam, awayTeam }: { fixtureId: str
 
       {/* H2H */}
       <div className="rounded-xl border border-card-border bg-card-dark p-4">
-        <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-betclic-gold">
+        <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-brand">
           Face à face
         </h3>
         {data.h2h.length === 0 ? (
@@ -86,7 +86,7 @@ export function FixtureStats({ fixtureId, homeTeam, awayTeam }: { fixtureId: str
             {data.h2h.map((m, i) => (
               <li key={i} className="flex items-center justify-between gap-3 text-sm">
                 <span className="min-w-0 flex-1 truncate">{m.homeTeam}</span>
-                <span className="shrink-0 rounded-lg bg-bg px-2.5 py-1 font-bold tabular-nums text-betclic-gold">
+                <span className="shrink-0 rounded-lg bg-bg px-2.5 py-1 font-bold tabular-nums text-brand">
                   {m.score}
                 </span>
                 <span className="min-w-0 flex-1 truncate text-right">{m.awayTeam}</span>
@@ -98,18 +98,18 @@ export function FixtureStats({ fixtureId, homeTeam, awayTeam }: { fixtureId: str
 
       {/* Summary */}
       <div className="rounded-xl border border-card-border bg-card-dark p-4">
-        <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-betclic-gold">
+        <h3 className="mb-3 text-xs font-bold uppercase tracking-wider text-brand">
           Répartition des résultats
         </h3>
         <div className="flex h-2 overflow-hidden rounded-full bg-surface-2">
-          <div className="bg-betclic-gold" style={{ width: `${data.statsSummary.homeWinPct}%` }} />
+          <div className="bg-brand" style={{ width: `${data.statsSummary.homeWinPct}%` }} />
           <div className="bg-surface-3" style={{ width: `${data.statsSummary.drawPct}%` }} />
-          <div className="bg-betclic-red" style={{ width: `${data.statsSummary.awayWinPct}%` }} />
+          <div className="bg-lose" style={{ width: `${data.statsSummary.awayWinPct}%` }} />
         </div>
         <div className="mt-2 flex justify-between text-[10px] font-semibold text-text-tertiary">
-          <span className="text-betclic-gold">{data.statsSummary.homeWinPct}% domicile</span>
+          <span className="text-brand">{data.statsSummary.homeWinPct}% domicile</span>
           <span>{data.statsSummary.drawPct}% nul</span>
-          <span className="text-betclic-red">{data.statsSummary.awayWinPct}% extérieur</span>
+          <span className="text-lose">{data.statsSummary.awayWinPct}% extérieur</span>
         </div>
       </div>
     </div>

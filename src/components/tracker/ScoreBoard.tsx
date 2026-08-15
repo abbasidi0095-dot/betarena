@@ -13,7 +13,7 @@ export function ScoreBoard({ fixture }: { fixture: FixtureRow }) {
     <div className="overflow-hidden rounded-2xl border border-card-border bg-card-dark">
       <div className="flex items-center justify-between border-b border-card-border px-4 py-2 text-[11px] font-semibold text-text-secondary">
         <span className="flex items-center gap-1.5">
-          <span className="h-1.5 w-1.5 rounded-full bg-betclic-gold" />
+          <span className="h-1.5 w-1.5 rounded-full bg-brand" />
           {fixture.league.country} · {fixture.league.name}
         </span>
         {live ? (
@@ -23,7 +23,7 @@ export function ScoreBoard({ fixture }: { fixture: FixtureRow }) {
             Terminé
           </span>
         ) : (
-          <span className="tabular-nums text-betclic-gold">{formatKickoff(fixture.kickoff)}</span>
+          <span className="tabular-nums text-brand">{formatKickoff(fixture.kickoff)}</span>
         )}
       </div>
       <div className="flex items-center justify-between gap-4 px-4 py-5">
@@ -40,7 +40,7 @@ export function ScoreBoard({ fixture }: { fixture: FixtureRow }) {
             className="rounded-xl border border-card-border bg-bg px-3 py-1.5 text-2xl font-bold"
           />
         ) : (
-          <span className="rounded-xl border border-betclic-gold/40 bg-bg px-3 py-1.5 text-sm font-bold text-betclic-gold">
+          <span className="rounded-xl border border-brand/40 bg-bg px-3 py-1.5 text-sm font-bold text-brand">
             vs
           </span>
         )}

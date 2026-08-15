@@ -59,7 +59,7 @@ export function Sidebar({ open, onClose }: { open: boolean; onClose: () => void 
       <Link
         href="/community"
         onClick={onClose}
-        className="flex items-center gap-2 rounded-lg px-2 py-2 text-sm text-betclic-gold hover:bg-surface-2"
+        className="flex items-center gap-2 rounded-lg px-2 py-2 text-sm text-brand hover:bg-surface-2"
       >
         <Users size={14} /> Community
       </Link>

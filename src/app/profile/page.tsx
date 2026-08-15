@@ -56,7 +56,7 @@ export default function ProfilePage() {
     <AppShell>
       <div className="mx-auto max-w-md">
         <div className="mb-4 flex items-center gap-3 rounded-2xl bg-surface p-4">
-          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-betclic-red text-lg font-black uppercase">
+          <span className="flex h-12 w-12 items-center justify-center rounded-full bg-brand text-lg font-black uppercase text-black">
             {user.username.slice(0, 2)}
           </span>
           <div className="flex-1">
@@ -102,13 +102,13 @@ export default function ProfilePage() {
             className={cn(
               "flex w-full items-center gap-3 rounded-2xl border p-4 text-left transition-colors",
               user.canRescue
-                ? "border-betclic-red/50 bg-betclic-red/10 hover:bg-betclic-red/15"
+                ? "border-brand/50 bg-brand/10 hover:bg-brand/15"
                 : "border-surface-2 bg-surface opacity-60",
             )}
           >
             <LifeBuoy
               size={22}
-              className={user.canRescue ? "text-betclic-red" : "text-text-tertiary"}
+              className={user.canRescue ? "text-brand" : "text-text-tertiary"}
             />
             <div>
               <p className="text-sm font-bold">Rescue top-up</p>

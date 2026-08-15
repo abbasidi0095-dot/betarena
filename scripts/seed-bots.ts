@@ -41,7 +41,7 @@ async function seedBots() {
       where: { username: name },
       create: {
         username: name,
-        email: `${name.toLowerCase()}@bots.betarena.local`,
+        email: `${name.toLowerCase()}@bots.abbet.local`,
         passwordHash,
         isBot: true,
         pointBalance: Math.floor(rand() * 4000) + 200,

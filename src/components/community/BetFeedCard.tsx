@@ -55,7 +55,7 @@ export function BetFeedCard({ bet }: { bet: CommunityBet }) {
           <li key={i} className="flex items-center justify-between gap-2 rounded-lg bg-bg px-2.5 py-1.5 text-[11px]">
             <span className="min-w-0 flex-1 truncate text-text-secondary">{leg.label}</span>
             <span className="shrink-0 truncate font-semibold">{leg.selectionName}</span>
-            <span className="shrink-0 font-bold tabular-nums text-betclic-gold">{leg.odds.toFixed(2)}</span>
+            <span className="shrink-0 font-bold tabular-nums text-brand">{leg.odds.toFixed(2)}</span>
           </li>
         ))}
       </ul>
@@ -65,7 +65,7 @@ export function BetFeedCard({ bet }: { bet: CommunityBet }) {
           Mise <span className="font-bold text-text-primary">{formatEuro(bet.stakeTotal)}</span>
           {bet.potentialReturn > 0 && (
             <>
-              {" · "}Gain potentiel <span className="font-bold text-betclic-gold">{formatEuro(bet.potentialReturn)}</span>
+              {" · "}Gain potentiel <span className="font-bold text-brand">{formatEuro(bet.potentialReturn)}</span>
             </>
           )}
         </p>

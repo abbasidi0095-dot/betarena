@@ -66,11 +66,11 @@ export default function FriendsPage() {
             onChange={(e) => setUsername(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && sendRequest()}
             placeholder="Add by username…"
-            className="flex-1 rounded-xl bg-surface px-3 py-2.5 text-sm outline-none placeholder:text-text-tertiary focus:ring-1 focus:ring-betclic-red"
+            className="flex-1 rounded-xl bg-surface px-3 py-2.5 text-sm outline-none placeholder:text-text-tertiary focus:ring-1 focus:ring-brand"
           />
           <button
             onClick={sendRequest}
-            className="rounded-xl bg-betclic-red px-4 text-sm font-bold text-white hover:bg-betclic-red-dark"
+            className="rounded-xl bg-brand px-4 text-sm font-bold text-black hover:bg-brand-hover"
           >
             <UserPlus size={16} />
           </button>
@@ -103,7 +103,7 @@ export default function FriendsPage() {
                   </button>
                   <button
                     onClick={() => respond(r.friendshipKey, "decline")}
-                    className="flex h-8 w-8 items-center justify-center rounded-lg bg-lose/15 text-lose"
+                    className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand/15 text-brand"
                     aria-label="Decline"
                   >
                     <X size={14} />

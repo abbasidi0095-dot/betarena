@@ -9,11 +9,11 @@ export function PromotionBanner() {
 
   return (
     <div className="mb-5 grid gap-3 sm:grid-cols-2">
-      <div className="rounded-2xl bg-gradient-to-br from-betclic-red to-betclic-red-dark p-4">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-white/70">
+      <div className="rounded-2xl bg-gradient-to-br from-brand to-brand-hover p-4">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-black/60">
           Free-to-play
         </p>
-        <p className="mt-1 text-sm font-bold text-white">
+        <p className="mt-1 text-sm font-bold text-black">
           €1,000 on the house. No real money — ever.
         </p>
       </div>
@@ -45,7 +45,7 @@ export function PromotionBanner() {
         >
           <Coins size={22} className="shrink-0 text-win" />
           <div>
-            <p className="text-sm font-semibold">Join BetArena</p>
+            <p className="text-sm font-semibold">Join Abbet</p>
             <p className="text-[11px] text-text-secondary">
               Register and get €1,000 instantly
             </p>

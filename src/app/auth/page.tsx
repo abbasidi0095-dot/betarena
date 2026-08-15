@@ -38,10 +38,10 @@ export default function AuthPage() {
     <AppShell>
       <div className="mx-auto mt-8 max-w-sm">
         <div className="mb-6 text-center">
-          <span className="rounded-lg bg-betclic-red px-3 py-1 text-2xl font-black italic text-white">
-            Bet
+          <span className="rounded-lg bg-brand px-3 py-1 text-2xl font-black italic text-black">
+            ab
           </span>
-          <span className="text-2xl font-black italic">Arena</span>
+          <span className="text-2xl font-black italic">bet</span>
           <p className="mt-2 text-xs text-text-secondary">
             €1,000 in free play money when you register. No real money, ever.
           </p>
@@ -55,7 +55,7 @@ export default function AuthPage() {
                 onClick={() => setMode(m)}
                 className={cn(
                   "rounded-lg py-2 text-xs font-bold capitalize",
-                  mode === m ? "bg-betclic-red text-white" : "text-text-secondary",
+                  mode === m ? "bg-brand text-black" : "text-text-secondary",
                 )}
               >
                 {m === "register" ? "Sign up" : "Log in"}
@@ -70,7 +70,7 @@ export default function AuthPage() {
                 onChange={(e) => setForm({ ...form, username: e.target.value })}
                 placeholder="Username"
                 autoComplete="username"
-                className="w-full rounded-xl bg-surface-2 px-3.5 py-2.5 text-sm outline-none placeholder:text-text-tertiary focus:ring-1 focus:ring-betclic-red"
+                className="w-full rounded-xl bg-surface-2 px-3.5 py-2.5 text-sm outline-none placeholder:text-text-tertiary focus:ring-1 focus:ring-brand"
               />
             )}
             <input
@@ -79,7 +79,7 @@ export default function AuthPage() {
               placeholder="Email"
               type="email"
               autoComplete="email"
-              className="w-full rounded-xl bg-surface-2 px-3.5 py-2.5 text-sm outline-none placeholder:text-text-tertiary focus:ring-1 focus:ring-betclic-red"
+              className="w-full rounded-xl bg-surface-2 px-3.5 py-2.5 text-sm outline-none placeholder:text-text-tertiary focus:ring-1 focus:ring-brand"
             />
             <input
               value={form.password}
@@ -87,7 +87,7 @@ export default function AuthPage() {
               placeholder={mode === "register" ? "Password (8+ characters)" : "Password"}
               type="password"
               autoComplete={mode === "register" ? "new-password" : "current-password"}
-              className="w-full rounded-xl bg-surface-2 px-3.5 py-2.5 text-sm outline-none placeholder:text-text-tertiary focus:ring-1 focus:ring-betclic-red"
+              className="w-full rounded-xl bg-surface-2 px-3.5 py-2.5 text-sm outline-none placeholder:text-text-tertiary focus:ring-1 focus:ring-brand"
             />
 
             {error && (
@@ -97,7 +97,7 @@ export default function AuthPage() {
             <button
               type="submit"
               disabled={busy}
-              className="w-full rounded-xl bg-betclic-red py-3 text-sm font-bold text-white hover:bg-betclic-red-dark disabled:opacity-60"
+              className="w-full rounded-xl bg-brand py-3 text-sm font-bold text-black hover:bg-brand-hover disabled:opacity-60"
             >
               {busy ? "Please wait…" : mode === "register" ? "Create account & claim €1,000" : "Log in"}
             </button>
@@ -105,7 +105,7 @@ export default function AuthPage() {
         </div>
 
         <p className="mt-4 text-center text-[10px] leading-relaxed text-text-tertiary">
-          BetArena is a free-to-play game with virtual currency only.
+          Abbet is a free-to-play game with virtual currency only.
           <br />
           It involves no real money, deposits, or withdrawals.
         </p>

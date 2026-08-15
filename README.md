@@ -1,4 +1,4 @@
-# BetArena — Free-to-Play Betclic-style Betting Platform
+# Abbet — Free-to-Play Betting Platform
 
 A Betclic-inspired sports betting web app that uses **virtual BetPoints only** —
 no real money, ever. Real football fixtures, odds, live scores and results from
@@ -94,5 +94,5 @@ node scripts/smoke-socket.mjs    # realtime e2e
 
 ## Responsible play
 
-BetArena is a game. Points have no monetary value, cannot be purchased,
+Abbet is a game. Points have no monetary value, cannot be purchased,
 transferred, or withdrawn. It is intended for entertainment and education only.

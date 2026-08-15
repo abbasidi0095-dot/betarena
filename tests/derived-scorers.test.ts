@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { deriveMarkets, buildScorersFromLineups } from "@/lib/betting/derived-markets";
+import { deriveMarkets } from "@/lib/betting/derived-markets";
 
 const base = { h2h: { home: 2.0, draw: 3.4, away: 3.6 }, totals: { over_2_5: 1.9, under_2_5: 1.9 }, btts: { btts_yes: 1.8, btts_no: 1.95 } };
 

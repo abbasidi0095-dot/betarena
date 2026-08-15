@@ -38,7 +38,7 @@ export function CopyBetButton({ legs }: { legs: CopyableLeg[] }) {
   return (
     <button
       onClick={handle}
-      className="flex items-center gap-1.5 rounded-lg bg-betclic-gold px-3 py-1.5 text-[11px] font-bold text-black transition-colors hover:bg-betclic-gold-hover"
+      className="flex items-center gap-1.5 rounded-lg bg-brand px-3 py-1.5 text-[11px] font-bold text-black transition-colors hover:bg-brand-hover"
     >
       <Copy size={12} />
       {copied ? "Copié !" : "Copier le pari"}

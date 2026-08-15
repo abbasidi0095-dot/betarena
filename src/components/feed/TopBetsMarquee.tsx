@@ -26,7 +26,7 @@ export function TopBetsMarquee() {
       className="mb-5 overflow-hidden rounded-xl border border-surface-2 bg-surface"
     >
       <div className="flex items-center gap-1.5 border-b border-surface-2 px-3.5 py-2">
-        <Flame size={13} className="text-betclic-red" />
+        <Flame size={13} className="text-brand" />
         <span className="text-[10px] font-bold uppercase tracking-widest text-text-secondary">
           Popular bets
         </span>
