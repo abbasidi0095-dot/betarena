@@ -1,6 +1,7 @@
 import { SignJWT, jwtVerify } from "jose";
 import bcrypt from "bcryptjs";
 import { cookies } from "next/headers";
+import type { NextRequest, NextResponse } from "next/server";
 
 export const COOKIE_NAME = "abbet_token";
 const THIRTY_DAYS = "30d";
@@ -45,4 +46,28 @@ export async function getSessionUser(): Promise<{ id: string } | null> {
   const token = store.get(COOKIE_NAME)?.value;
   if (!token) return null;
   return verifyToken(token);
+}
+
+/**
+ * True when the client is on real HTTPS. NODE_ENV=production is not enough:
+ * the dev/prod server runs on plain HTTP, and browsers drop Secure cookies
+ * received over HTTP — which logged users out on every refresh.
+ */
+export function isSecureRequest(req: NextRequest): boolean {
+  return (
+    req.nextUrl.protocol === "https:" ||
+    req.headers.get("x-forwarded-proto") === "https"
+  );
+}
+
+/** Attach the 30-day session cookie to a response. */
+export async function setSessionCookie(res: NextResponse, userId: string, req: NextRequest) {
+  const token = await createToken(userId);
+  res.cookies.set(COOKIE_NAME, token, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: isSecureRequest(req),
+    maxAge: 60 * 60 * 24 * 30,
+    path: "/",
+  });
 }

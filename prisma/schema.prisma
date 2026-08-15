@@ -20,11 +20,26 @@ model User {
   betsWon           Int       @default(0)
   betsLost          Int       @default(0)
   isBot             Boolean   @default(false)
+  emailVerifiedAt   DateTime?
   createdAt         DateTime  @default(now())
 
   friendshipsRequested Friendship[] @relation("FriendshipRequester")
   friendshipsReceived  Friendship[] @relation("FriendshipAddressee")
   bets                 Bet[]
+  otps                 Otp[]
+}
+
+model Otp {
+  id        String   @id @default(cuid())
+  userId    String
+  codeHash  String
+  expiresAt DateTime
+  attempts  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model Friendship {

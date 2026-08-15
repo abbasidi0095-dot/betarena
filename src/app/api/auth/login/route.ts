@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { loginSchema } from "@/lib/validation";
-import { verifyPassword, createToken, COOKIE_NAME } from "@/lib/auth";
+import { verifyPassword, setSessionCookie } from "@/lib/auth";
 import { jsonError } from "@/lib/api";
-
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
@@ -18,22 +17,15 @@ export async function POST(req: NextRequest) {
     return jsonError("INVALID_CREDENTIALS", "Invalid email or password", 401);
   }
 
-  const token = await createToken(user.id);
+  if (!user.emailVerifiedAt) {
+    // Credentials are correct, but the email was never verified — the
+    // client should show the OTP step before a session is issued.
+    return jsonError("EMAIL_UNVERIFIED", "Verify your email to continue", 403);
+  }
+
   const res = NextResponse.json({
     user: { id: user.id, username: user.username, pointBalance: user.pointBalance },
   });
-  // Secure only over real HTTPS. NODE_ENV=production is not enough: the
-  // dev/prod server runs on plain HTTP, and browsers drop Secure cookies
-  // received over HTTP — which logged users out on every refresh.
-  const secure =
-    req.nextUrl.protocol === "https:" ||
-    req.headers.get("x-forwarded-proto") === "https";
-  res.cookies.set(COOKIE_NAME, token, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure,
-    maxAge: 60 * 60 * 24 * 30,
-    path: "/",
-  });
+  await setSessionCookie(res, user.id, req);
   return res;
 }

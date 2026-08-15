@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { registerSchema } from "@/lib/validation";
-import { hashPassword, createToken, COOKIE_NAME } from "@/lib/auth";
+import { hashPassword } from "@/lib/auth";
 import { jsonError } from "@/lib/api";
-
+import { issueOtp } from "@/server/otp-service";
 
 export async function POST(req: NextRequest) {
   const body = await req.json().catch(() => null);
@@ -33,18 +33,12 @@ export async function POST(req: NextRequest) {
     },
   });
 
-  const token = await createToken(user.id);
-  const res = NextResponse.json({
+  // Email verification via OTP — no session until the code is confirmed.
+  await issueOtp(user.id, user.email);
+  console.log(`[auth] registered ${email} — awaiting OTP verification`);
+
+  return NextResponse.json({
     user: { id: user.id, username: user.username, pointBalance: user.pointBalance },
+    verificationPending: true,
   });
-  res.cookies.set(COOKIE_NAME, token, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure:
-      req.nextUrl.protocol === "https:" ||
-      req.headers.get("x-forwarded-proto") === "https",
-    maxAge: 60 * 60 * 24 * 30,
-    path: "/",
-  });
-  return res;
 }
