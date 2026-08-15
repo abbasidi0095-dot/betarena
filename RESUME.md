@@ -20,7 +20,7 @@ Last updated: 2026-08-14 (session by opencode AI assistant)
 
 ## Known pending / next steps
 
-1. **Investigate webapp error** (reported by user after tunnel testing) — reproduce via tunnel URL, check `/tmp/opencode/betarena.log` and browser console.
+1. ~~Investigate webapp error~~ **FIXED 2026-08-14**: Prisma Decimal serialized odds as JSON strings → `oddsToString()` crashed on `toFixed()` (white screen). Normalized in `src/lib/serialize.ts` (used by /api/fixtures, /api/fixtures/[id], /api/search) + defensive `Number()` coercion in `format.ts`. Verified error-free in headless Chromium across all 7 pages (logged in).
 2. Dev-mode loop (`npm run dev`) sanity check — esbuild watch + `node --watch`; prod path is the verified one.
 3. Optional: `fly deploy` (Dockerfile + fly.toml ready; needs `fly launch`, Postgres attach, secrets).
 
